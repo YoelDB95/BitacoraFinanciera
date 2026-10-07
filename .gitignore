@@ -1,0 +1,18 @@
+node_modules/
+.env
+.agents/
+.claude/
+.cursor/
+.devin/
+
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
