@@ -8,8 +8,40 @@
       "model": "Accounts",
       "namespace": "public"
     },
+    "card_installments": {
+      "model": "CardInstallments",
+      "namespace": "public"
+    },
+    "card_payment_allocations": {
+      "model": "CardPaymentAllocations",
+      "namespace": "public"
+    },
+    "card_purchases": {
+      "model": "CardPurchases",
+      "namespace": "public"
+    },
     "categories": {
       "model": "Categories",
+      "namespace": "public"
+    },
+    "companies": {
+      "model": "Companies",
+      "namespace": "public"
+    },
+    "company_billing_contacts": {
+      "model": "CompanyBillingContacts",
+      "namespace": "public"
+    },
+    "company_rates": {
+      "model": "CompanyRates",
+      "namespace": "public"
+    },
+    "credit_card_payments": {
+      "model": "CreditCardPayments",
+      "namespace": "public"
+    },
+    "credit_cards": {
+      "model": "CreditCards",
       "namespace": "public"
     },
     "external_transactions": {
@@ -28,12 +60,52 @@
       "model": "Investments",
       "namespace": "public"
     },
+    "invoice_route_companies": {
+      "model": "InvoiceRouteCompanies",
+      "namespace": "public"
+    },
+    "invoices": {
+      "model": "Invoices",
+      "namespace": "public"
+    },
+    "loan_movements": {
+      "model": "LoanMovements",
+      "namespace": "public"
+    },
+    "loan_settlements": {
+      "model": "LoanSettlements",
+      "namespace": "public"
+    },
+    "loans": {
+      "model": "Loans",
+      "namespace": "public"
+    },
+    "people": {
+      "model": "People",
+      "namespace": "public"
+    },
     "reservation_movements": {
       "model": "ReservationMovements",
       "namespace": "public"
     },
     "reservations": {
       "model": "Reservations",
+      "namespace": "public"
+    },
+    "route_companies": {
+      "model": "RouteCompanies",
+      "namespace": "public"
+    },
+    "route_rates": {
+      "model": "RouteRates",
+      "namespace": "public"
+    },
+    "route_types": {
+      "model": "RouteTypes",
+      "namespace": "public"
+    },
+    "routes": {
+      "model": "Routes",
       "namespace": "public"
     },
     "sync_logs": {
@@ -155,6 +227,52 @@
               }
             },
             "relations": {
+              "creditCardPayments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "accountId"
+                  ]
+                },
+                "to": {
+                  "model": "CreditCardPayments",
+                  "namespace": "public"
+                }
+              },
+              "creditCards": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "accountId"
+                  ]
+                },
+                "to": {
+                  "model": "CreditCards",
+                  "namespace": "public"
+                }
+              },
+              "loanMovements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "accountId"
+                  ]
+                },
+                "to": {
+                  "model": "LoanMovements",
+                  "namespace": "public"
+                }
+              },
               "reservations": {
                 "cardinality": "1:N",
                 "on": {
@@ -267,6 +385,405 @@
               },
               "namespaceId": "public",
               "table": "accounts"
+            }
+          },
+          "CardInstallments": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "cardPurchaseId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "dueDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "installmentNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "paidAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "card_installment_status"
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "cardPaymentAllocations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "installmentId"
+                  ]
+                },
+                "to": {
+                  "model": "CardPaymentAllocations",
+                  "namespace": "public"
+                }
+              },
+              "cardPurchase": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "cardPurchaseId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CardPurchases",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "cardPurchaseId": {
+                  "column": "card_purchase_id"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "dueDate": {
+                  "column": "due_date"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "installmentNumber": {
+                  "column": "installment_number"
+                },
+                "paidAt": {
+                  "column": "paid_at"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "card_installments"
+            }
+          },
+          "CardPaymentAllocations": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "installmentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "paymentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "installment": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "installmentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CardInstallments",
+                  "namespace": "public"
+                }
+              },
+              "payment": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "paymentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CreditCardPayments",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "installmentId": {
+                  "column": "installment_id"
+                },
+                "paymentId": {
+                  "column": "payment_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "card_payment_allocations"
+            }
+          },
+          "CardPurchases": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "creditCardId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "installmentsCount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "interestAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "principalAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "purchaseDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "totalAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "transactionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "cardInstallments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "cardPurchaseId"
+                  ]
+                },
+                "to": {
+                  "model": "CardInstallments",
+                  "namespace": "public"
+                }
+              },
+              "creditCard": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "creditCardId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CreditCards",
+                  "namespace": "public"
+                }
+              },
+              "transaction": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "transactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Transactions",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "creditCardId": {
+                  "column": "credit_card_id"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "installmentsCount": {
+                  "column": "installments_count"
+                },
+                "interestAmount": {
+                  "column": "interest_amount"
+                },
+                "principalAmount": {
+                  "column": "principal_amount"
+                },
+                "purchaseDate": {
+                  "column": "purchase_date"
+                },
+                "totalAmount": {
+                  "column": "total_amount"
+                },
+                "transactionId": {
+                  "column": "transaction_id"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "card_purchases"
             }
           },
           "Categories": {
@@ -430,6 +947,746 @@
               },
               "namespaceId": "public",
               "table": "categories"
+            }
+          },
+          "Companies": {
+            "fields": {
+              "active": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "billingAddress": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "billingNotes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "businessName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "cuit": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 13
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "legalName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "companyBillingContacts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "companyId"
+                  ]
+                },
+                "to": {
+                  "model": "CompanyBillingContacts",
+                  "namespace": "public"
+                }
+              },
+              "companyRates": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "companyId"
+                  ]
+                },
+                "to": {
+                  "model": "CompanyRates",
+                  "namespace": "public"
+                }
+              },
+              "invoices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "companyId"
+                  ]
+                },
+                "to": {
+                  "model": "Invoices",
+                  "namespace": "public"
+                }
+              },
+              "routeCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "companyId"
+                  ]
+                },
+                "to": {
+                  "model": "RouteCompanies",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Users",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "active": {
+                  "column": "active"
+                },
+                "billingAddress": {
+                  "column": "billing_address"
+                },
+                "billingNotes": {
+                  "column": "billing_notes"
+                },
+                "businessName": {
+                  "column": "business_name"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "cuit": {
+                  "column": "cuit"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "legalName": {
+                  "column": "legal_name"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                },
+                "userId": {
+                  "column": "user_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "companies"
+            }
+          },
+          "CompanyBillingContacts": {
+            "fields": {
+              "companyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "email": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "isPrimary": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "company": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "companyId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Companies",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "companyId": {
+                  "column": "company_id"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "email": {
+                  "column": "email"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "isPrimary": {
+                  "column": "is_primary"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "company_billing_contacts"
+            }
+          },
+          "CompanyRates": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "companyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "unit": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "validFrom": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "validTo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "company": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "companyId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Companies",
+                  "namespace": "public"
+                }
+              },
+              "routeCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "companyRateId"
+                  ]
+                },
+                "to": {
+                  "model": "RouteCompanies",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "companyId": {
+                  "column": "company_id"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "unit": {
+                  "column": "unit"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                },
+                "validFrom": {
+                  "column": "valid_from"
+                },
+                "validTo": {
+                  "column": "valid_to"
+                }
+              },
+              "namespaceId": "public",
+              "table": "company_rates"
+            }
+          },
+          "CreditCardPayments": {
+            "fields": {
+              "accountId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "creditCardId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "paymentDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "account": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "accountId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Accounts",
+                  "namespace": "public"
+                }
+              },
+              "cardPaymentAllocations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "paymentId"
+                  ]
+                },
+                "to": {
+                  "model": "CardPaymentAllocations",
+                  "namespace": "public"
+                }
+              },
+              "creditCard": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "creditCardId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CreditCards",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accountId": {
+                  "column": "account_id"
+                },
+                "amount": {
+                  "column": "amount"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "creditCardId": {
+                  "column": "credit_card_id"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "paymentDate": {
+                  "column": "payment_date"
+                }
+              },
+              "namespaceId": "public",
+              "table": "credit_card_payments"
+            }
+          },
+          "CreditCards": {
+            "fields": {
+              "accountId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "cardBrand": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "closingDay": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int2@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "creditLimit": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "dueDay": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int2@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "issuer": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastFourDigits": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 4
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "account": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "accountId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Accounts",
+                  "namespace": "public"
+                }
+              },
+              "cardPurchases": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "creditCardId"
+                  ]
+                },
+                "to": {
+                  "model": "CardPurchases",
+                  "namespace": "public"
+                }
+              },
+              "creditCardPayments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "creditCardId"
+                  ]
+                },
+                "to": {
+                  "model": "CreditCardPayments",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accountId": {
+                  "column": "account_id"
+                },
+                "cardBrand": {
+                  "column": "card_brand"
+                },
+                "closingDay": {
+                  "column": "closing_day"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "creditLimit": {
+                  "column": "credit_limit"
+                },
+                "dueDay": {
+                  "column": "due_day"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "issuer": {
+                  "column": "issuer"
+                },
+                "lastFourDigits": {
+                  "column": "last_four_digits"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "credit_cards"
             }
           },
           "ExternalTransactions": {
@@ -929,6 +2186,853 @@
               "table": "investments"
             }
           },
+          "InvoiceRouteCompanies": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "invoiceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeCompanyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "invoice": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "invoiceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Invoices",
+                  "namespace": "public"
+                }
+              },
+              "routeCompany": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "routeCompanyId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RouteCompanies",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "invoiceId": {
+                  "column": "invoice_id"
+                },
+                "routeCompanyId": {
+                  "column": "route_company_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "invoice_route_companies"
+            }
+          },
+          "Invoices": {
+            "fields": {
+              "companyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "invoiceDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "invoiceNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "paidAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "periodMonth": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int2@1",
+                  "kind": "scalar"
+                }
+              },
+              "periodYear": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int2@1",
+                  "kind": "scalar"
+                }
+              },
+              "sentAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "invoice_status"
+                  }
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "total": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "company": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "companyId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Companies",
+                  "namespace": "public"
+                }
+              },
+              "invoiceRouteCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "invoiceId"
+                  ]
+                },
+                "to": {
+                  "model": "InvoiceRouteCompanies",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Users",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "companyId": {
+                  "column": "company_id"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "invoiceDate": {
+                  "column": "invoice_date"
+                },
+                "invoiceNumber": {
+                  "column": "invoice_number"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "paidAt": {
+                  "column": "paid_at"
+                },
+                "periodMonth": {
+                  "column": "period_month"
+                },
+                "periodYear": {
+                  "column": "period_year"
+                },
+                "sentAt": {
+                  "column": "sent_at"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                },
+                "total": {
+                  "column": "total"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                },
+                "userId": {
+                  "column": "user_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "invoices"
+            }
+          },
+          "LoanMovements": {
+            "fields": {
+              "_type": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "loan_movement_type"
+                  }
+                }
+              },
+              "accountId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "loanId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "transactionDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "account": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "accountId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Accounts",
+                  "namespace": "public"
+                }
+              },
+              "loan": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "loanId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Loans",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "_type": {
+                  "column": "type"
+                },
+                "accountId": {
+                  "column": "account_id"
+                },
+                "amount": {
+                  "column": "amount"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "loanId": {
+                  "column": "loan_id"
+                },
+                "transactionDate": {
+                  "column": "transaction_date"
+                }
+              },
+              "namespaceId": "public",
+              "table": "loan_movements"
+            }
+          },
+          "LoanSettlements": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "payableLoanId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "receivableLoanId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "settlementDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "payableLoan": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "payableLoanId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Loans",
+                  "namespace": "public"
+                }
+              },
+              "receivableLoan": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "receivableLoanId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Loans",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "payableLoanId": {
+                  "column": "payable_loan_id"
+                },
+                "receivableLoanId": {
+                  "column": "receivable_loan_id"
+                },
+                "settlementDate": {
+                  "column": "settlement_date"
+                }
+              },
+              "namespaceId": "public",
+              "table": "loan_settlements"
+            }
+          },
+          "Loans": {
+            "fields": {
+              "_type": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "loan_type"
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "dueDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "outstandingAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "personId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "principalAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "startDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "loan_status"
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "loanMovements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "loanId"
+                  ]
+                },
+                "to": {
+                  "model": "LoanMovements",
+                  "namespace": "public"
+                }
+              },
+              "loanSettlements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "payableLoanId"
+                  ]
+                },
+                "to": {
+                  "model": "LoanSettlements",
+                  "namespace": "public"
+                }
+              },
+              "loanSettlementsLoanSettlements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "receivableLoanId"
+                  ]
+                },
+                "to": {
+                  "model": "LoanSettlements",
+                  "namespace": "public"
+                }
+              },
+              "person": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "personId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "People",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "_type": {
+                  "column": "type"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "dueDate": {
+                  "column": "due_date"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "outstandingAmount": {
+                  "column": "outstanding_amount"
+                },
+                "personId": {
+                  "column": "person_id"
+                },
+                "principalAmount": {
+                  "column": "principal_amount"
+                },
+                "startDate": {
+                  "column": "start_date"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "loans"
+            }
+          },
+          "People": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "loans": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "personId"
+                  ]
+                },
+                "to": {
+                  "model": "Loans",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Users",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                },
+                "userId": {
+                  "column": "user_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "people"
+            }
+          },
           "ReservationMovements": {
             "fields": {
               "_type": {
@@ -1169,6 +3273,740 @@
               },
               "namespaceId": "public",
               "table": "reservations"
+            }
+          },
+          "RouteCompanies": {
+            "fields": {
+              "billingAmount": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "companyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "companyRateAmount": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "companyRateId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "kilometers": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "packagesReceived": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "packagesUndelivered": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "rateAmount": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "routeId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeRateAmount": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeRateId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "company": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "companyId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Companies",
+                  "namespace": "public"
+                }
+              },
+              "companyRate": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "companyRateId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CompanyRates",
+                  "namespace": "public"
+                }
+              },
+              "invoiceRouteCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeCompanyId"
+                  ]
+                },
+                "to": {
+                  "model": "InvoiceRouteCompanies",
+                  "namespace": "public"
+                }
+              },
+              "route": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "routeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Routes",
+                  "namespace": "public"
+                }
+              },
+              "routeRate": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "routeRateId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RouteRates",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "billingAmount": {
+                  "column": "billing_amount"
+                },
+                "companyId": {
+                  "column": "company_id"
+                },
+                "companyRateAmount": {
+                  "column": "company_rate_amount"
+                },
+                "companyRateId": {
+                  "column": "company_rate_id"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "kilometers": {
+                  "column": "kilometers"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "packagesReceived": {
+                  "column": "packages_received"
+                },
+                "packagesUndelivered": {
+                  "column": "packages_undelivered"
+                },
+                "rateAmount": {
+                  "column": "rate_amount"
+                },
+                "routeId": {
+                  "column": "route_id"
+                },
+                "routeRateAmount": {
+                  "column": "route_rate_amount"
+                },
+                "routeRateId": {
+                  "column": "route_rate_id"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "route_companies"
+            }
+          },
+          "RouteRates": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeTypeId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "validFrom": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "validTo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "routeCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeRateId"
+                  ]
+                },
+                "to": {
+                  "model": "RouteCompanies",
+                  "namespace": "public"
+                }
+              },
+              "routeType": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "routeTypeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RouteTypes",
+                  "namespace": "public"
+                }
+              },
+              "routes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeRateId"
+                  ]
+                },
+                "to": {
+                  "model": "Routes",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "routeTypeId": {
+                  "column": "route_type_id"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                },
+                "validFrom": {
+                  "column": "valid_from"
+                },
+                "validTo": {
+                  "column": "valid_to"
+                }
+              },
+              "namespaceId": "public",
+              "table": "route_rates"
+            }
+          },
+          "RouteTypes": {
+            "fields": {
+              "code": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "isActive": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "isSpecial": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "routeRates": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeTypeId"
+                  ]
+                },
+                "to": {
+                  "model": "RouteRates",
+                  "namespace": "public"
+                }
+              },
+              "routes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeTypeId"
+                  ]
+                },
+                "to": {
+                  "model": "Routes",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "code": {
+                  "column": "code"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "isActive": {
+                  "column": "is_active"
+                },
+                "isSpecial": {
+                  "column": "is_special"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                }
+              },
+              "namespaceId": "public",
+              "table": "route_types"
+            }
+          },
+          "Routes": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "destinationCity": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "kilometers": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "packagesUndelivered": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeCode": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeDate": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/date-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeRateId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeTypeId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int8@1",
+                  "kind": "scalar"
+                }
+              },
+              "vehicleKmEnd": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                }
+              },
+              "vehicleKmStart": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                }
+              }
+            },
+            "relations": {
+              "routeCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeId"
+                  ]
+                },
+                "to": {
+                  "model": "RouteCompanies",
+                  "namespace": "public"
+                }
+              },
+              "routeRate": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "routeRateId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RouteRates",
+                  "namespace": "public"
+                }
+              },
+              "routeType": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "routeTypeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RouteTypes",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Users",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "destinationCity": {
+                  "column": "destination_city"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "kilometers": {
+                  "column": "kilometers"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "packagesUndelivered": {
+                  "column": "packages_undelivered"
+                },
+                "routeCode": {
+                  "column": "route_code"
+                },
+                "routeDate": {
+                  "column": "route_date"
+                },
+                "routeRateId": {
+                  "column": "route_rate_id"
+                },
+                "routeTypeId": {
+                  "column": "route_type_id"
+                },
+                "updatedAt": {
+                  "column": "updated_at"
+                },
+                "userId": {
+                  "column": "user_id"
+                },
+                "vehicleKmEnd": {
+                  "column": "vehicle_km_end"
+                },
+                "vehicleKmStart": {
+                  "column": "vehicle_km_start"
+                }
+              },
+              "namespaceId": "public",
+              "table": "routes"
             }
           },
           "SyncLogs": {
@@ -1531,6 +4369,21 @@
                   "namespace": "public"
                 }
               },
+              "cardPurchases": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "transactionId"
+                  ]
+                },
+                "to": {
+                  "model": "CardPurchases",
+                  "namespace": "public"
+                }
+              },
               "category": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -1818,6 +4671,21 @@
                   "namespace": "public"
                 }
               },
+              "companies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Companies",
+                  "namespace": "public"
+                }
+              },
               "investmentAccounts": {
                 "cardinality": "1:N",
                 "on": {
@@ -1830,6 +4698,51 @@
                 },
                 "to": {
                   "model": "InvestmentAccounts",
+                  "namespace": "public"
+                }
+              },
+              "invoices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Invoices",
+                  "namespace": "public"
+                }
+              },
+              "people": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "People",
+                  "namespace": "public"
+                }
+              },
+              "routes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Routes",
                   "namespace": "public"
                 }
               },
@@ -1895,6 +4808,17 @@
               ],
               "typeName": "account_type"
             },
+            "card_installment_status": {
+              "kind": "postgres-enum",
+              "members": [
+                "PENDING",
+                "PARTIALLY_PAID",
+                "PAID",
+                "OVERDUE",
+                "CANCELLED"
+              ],
+              "typeName": "card_installment_status"
+            },
             "category_type": {
               "kind": "postgres-enum",
               "members": [
@@ -1916,6 +4840,44 @@
               ],
               "typeName": "investment_transaction_type"
             },
+            "invoice_status": {
+              "kind": "postgres-enum",
+              "members": [
+                "DRAFT",
+                "ISSUED",
+                "SENT",
+                "PAID",
+                "CANCELLED"
+              ],
+              "typeName": "invoice_status"
+            },
+            "loan_movement_type": {
+              "kind": "postgres-enum",
+              "members": [
+                "DISBURSEMENT",
+                "REPAYMENT",
+                "INTEREST",
+                "ADJUSTMENT"
+              ],
+              "typeName": "loan_movement_type"
+            },
+            "loan_status": {
+              "kind": "postgres-enum",
+              "members": [
+                "ACTIVE",
+                "COMPLETED",
+                "CANCELLED"
+              ],
+              "typeName": "loan_status"
+            },
+            "loan_type": {
+              "kind": "postgres-enum",
+              "members": [
+                "LENT",
+                "BORROWED"
+              ],
+              "typeName": "loan_type"
+            },
             "reservation_movement_type": {
               "kind": "postgres-enum",
               "members": [
@@ -1933,6 +4895,15 @@
                 "CANCELLED"
               ],
               "typeName": "reservation_status"
+            },
+            "route_rate_type": {
+              "kind": "postgres-enum",
+              "members": [
+                "PER_KILOMETER",
+                "PER_PACKAGE",
+                "FIXED"
+              ],
+              "typeName": "route_rate_type"
             },
             "sync_status": {
               "kind": "postgres-enum",
@@ -1970,10 +4941,50 @@
               "namespaceId": "public",
               "tableName": "accounts"
             },
+            "card_installments": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "card_installments"
+            },
+            "card_payment_allocations": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "card_payment_allocations"
+            },
+            "card_purchases": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "card_purchases"
+            },
             "categories": {
               "kind": "rls",
               "namespaceId": "public",
               "tableName": "categories"
+            },
+            "companies": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "companies"
+            },
+            "company_billing_contacts": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "company_billing_contacts"
+            },
+            "company_rates": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "company_rates"
+            },
+            "credit_card_payments": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "credit_card_payments"
+            },
+            "credit_cards": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "credit_cards"
             },
             "external_transactions": {
               "kind": "rls",
@@ -1995,6 +5006,36 @@
               "namespaceId": "public",
               "tableName": "investments"
             },
+            "invoice_route_companies": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "invoice_route_companies"
+            },
+            "invoices": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "invoices"
+            },
+            "loan_movements": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "loan_movements"
+            },
+            "loan_settlements": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "loan_settlements"
+            },
+            "loans": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "loans"
+            },
+            "people": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "people"
+            },
             "reservation_movements": {
               "kind": "rls",
               "namespaceId": "public",
@@ -2004,6 +5045,26 @@
               "kind": "rls",
               "namespaceId": "public",
               "tableName": "reservations"
+            },
+            "route_companies": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "route_companies"
+            },
+            "route_rates": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "route_rates"
+            },
+            "route_types": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "route_types"
+            },
+            "routes": {
+              "kind": "rls",
+              "namespaceId": "public",
+              "tableName": "routes"
             },
             "sync_logs": {
               "kind": "rls",
@@ -2171,6 +5232,365 @@
               },
               "uniques": []
             },
+            "card_installments": {
+              "checks": [
+                {
+                  "expression": "(amount > (0)::numeric)",
+                  "name": "card_installments_amount_check"
+                },
+                {
+                  "expression": "(installment_number > 0)",
+                  "name": "card_installments_installment_number_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "card_purchase_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "due_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "installment_number": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "paid_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/enum@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "PENDING"
+                  },
+                  "nativeType": "card_installment_status",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "card_installment_status"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "CardInstallmentStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_card_installments_purchase",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "card_purchase_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_installments"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_purchases"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "card_installments_pkey"
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "card_purchase_id",
+                    "installment_number"
+                  ],
+                  "name": "uq_card_installments_number"
+                }
+              ]
+            },
+            "card_payment_allocations": {
+              "checks": [
+                {
+                  "expression": "(amount > (0)::numeric)",
+                  "name": "card_payment_allocations_amount_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "installment_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "payment_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_card_payment_allocations_installment",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "installment_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_payment_allocations"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_installments"
+                  }
+                },
+                {
+                  "name": "fk_card_payment_allocations_payment",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "payment_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_payment_allocations"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "credit_card_payments"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "payment_id",
+                  "installment_id"
+                ],
+                "name": "card_payment_allocations_pkey"
+              },
+              "uniques": []
+            },
+            "card_purchases": {
+              "checks": [
+                {
+                  "expression": "(installments_count > 0)",
+                  "name": "card_purchases_installments_count_check"
+                },
+                {
+                  "expression": "(interest_amount >= (0)::numeric)",
+                  "name": "card_purchases_interest_amount_check"
+                },
+                {
+                  "expression": "(principal_amount >= (0)::numeric)",
+                  "name": "card_purchases_principal_amount_check"
+                },
+                {
+                  "expression": "(total_amount > (0)::numeric)",
+                  "name": "card_purchases_total_amount_check"
+                },
+                {
+                  "expression": "(total_amount = (principal_amount + interest_amount))",
+                  "name": "chk_card_purchases_total"
+                }
+              ],
+              "columns": {
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "credit_card_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "installments_count": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "interest_amount": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "principal_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "purchase_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "total_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "transaction_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_card_purchases_card",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "credit_card_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_purchases"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "credit_cards"
+                  }
+                },
+                {
+                  "name": "fk_card_purchases_transaction",
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "transaction_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "card_purchases"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transactions"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "card_purchases_pkey"
+              },
+              "uniques": []
+            },
             "categories": {
               "columns": {
                 "created_at": {
@@ -2287,6 +5707,535 @@
                 "name": "categories_pkey"
               },
               "uniques": []
+            },
+            "companies": {
+              "columns": {
+                "active": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "billing_address": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "billing_notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "business_name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "cuit": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 13
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "legal_name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "user_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_companies_user",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "user_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "companies_pkey"
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "user_id",
+                    "cuit"
+                  ],
+                  "name": "uq_companies_user_cuit"
+                }
+              ]
+            },
+            "company_billing_contacts": {
+              "columns": {
+                "company_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "is_primary": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_company_billing_contacts_company",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "company_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "company_billing_contacts"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "companies"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "company_billing_contacts_pkey"
+              },
+              "uniques": []
+            },
+            "company_rates": {
+              "checks": [
+                {
+                  "expression": "((valid_to IS NULL) OR (valid_to >= valid_from))",
+                  "name": "chk_company_rates_dates"
+                },
+                {
+                  "expression": "(amount > (0)::numeric)",
+                  "name": "company_rates_amount_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false
+                },
+                "company_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "unit": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "valid_from": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "valid_to": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_company_rates_company",
+                  "source": {
+                    "columns": [
+                      "company_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "company_rates"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "companies"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "company_rates_pkey"
+              },
+              "uniques": []
+            },
+            "credit_card_payments": {
+              "checks": [
+                {
+                  "expression": "(amount > (0)::numeric)",
+                  "name": "credit_card_payments_amount_check"
+                }
+              ],
+              "columns": {
+                "account_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "credit_card_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "payment_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_credit_card_payments_account",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "account_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "credit_card_payments"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "accounts"
+                  }
+                },
+                {
+                  "name": "fk_credit_card_payments_card",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "credit_card_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "credit_card_payments"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "credit_cards"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "credit_card_payments_pkey"
+              },
+              "uniques": []
+            },
+            "credit_cards": {
+              "checks": [
+                {
+                  "expression": "((last_four_digits IS NULL) OR ((last_four_digits)::text ~ '^[0-9]{4}$'::text))",
+                  "name": "chk_credit_cards_last_four"
+                },
+                {
+                  "expression": "((closing_day >= 1) AND (closing_day <= 31))",
+                  "name": "credit_cards_closing_day_check"
+                },
+                {
+                  "expression": "((credit_limit IS NULL) OR (credit_limit >= (0)::numeric))",
+                  "name": "credit_cards_credit_limit_check"
+                },
+                {
+                  "expression": "((due_day >= 1) AND (due_day <= 31))",
+                  "name": "credit_cards_due_day_check"
+                }
+              ],
+              "columns": {
+                "account_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "card_brand": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "closing_day": {
+                  "codecId": "pg/int2@1",
+                  "nativeType": "int2",
+                  "nullable": true
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "credit_limit": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "due_day": {
+                  "codecId": "pg/int2@1",
+                  "nativeType": "int2",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "issuer": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "last_four_digits": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 4
+                  }
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_credit_cards_account",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "account_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "credit_cards"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "accounts"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "credit_cards_pkey"
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "account_id"
+                  ],
+                  "name": "credit_cards_account_id_key"
+                }
+              ]
             },
             "external_transactions": {
               "columns": {
@@ -2698,6 +6647,699 @@
               },
               "uniques": []
             },
+            "invoice_route_companies": {
+              "checks": [
+                {
+                  "expression": "(amount >= (0)::numeric)",
+                  "name": "invoice_route_companies_amount_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "invoice_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "route_company_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_invoice_route_companies_invoice",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "invoice_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "invoice_route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "invoices"
+                  }
+                },
+                {
+                  "name": "fk_invoice_route_companies_route_company",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "route_company_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "invoice_route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_companies"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "invoice_id",
+                  "route_company_id"
+                ],
+                "name": "invoice_route_companies_pkey"
+              },
+              "uniques": []
+            },
+            "invoices": {
+              "checks": [
+                {
+                  "expression": "((period_month >= 1) AND (period_month <= 12))",
+                  "name": "invoices_period_month_check"
+                },
+                {
+                  "expression": "(subtotal >= (0)::numeric)",
+                  "name": "invoices_subtotal_check"
+                },
+                {
+                  "expression": "(total >= (0)::numeric)",
+                  "name": "invoices_total_check"
+                }
+              ],
+              "columns": {
+                "company_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "invoice_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "invoice_number": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "paid_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "period_month": {
+                  "codecId": "pg/int2@1",
+                  "nativeType": "int2",
+                  "nullable": false
+                },
+                "period_year": {
+                  "codecId": "pg/int2@1",
+                  "nativeType": "int2",
+                  "nullable": false
+                },
+                "sent_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/enum@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "DRAFT"
+                  },
+                  "nativeType": "invoice_status",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "invoice_status"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "InvoiceStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "total": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "user_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_invoices_company",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "company_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "invoices"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "companies"
+                  }
+                },
+                {
+                  "name": "fk_invoices_user",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "user_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "invoices"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "invoices_pkey"
+              },
+              "uniques": []
+            },
+            "loan_movements": {
+              "checks": [
+                {
+                  "expression": "(amount > (0)::numeric)",
+                  "name": "loan_movements_amount_check"
+                }
+              ],
+              "columns": {
+                "account_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "loan_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "transaction_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "nativeType": "loan_movement_type",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "loan_movement_type"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "LoanMovementType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_loan_movements_account",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "account_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loan_movements"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "accounts"
+                  }
+                },
+                {
+                  "name": "fk_loan_movements_loan",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "loan_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loan_movements"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loans"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "loan_movements_pkey"
+              },
+              "uniques": []
+            },
+            "loan_settlements": {
+              "checks": [
+                {
+                  "expression": "(receivable_loan_id <> payable_loan_id)",
+                  "name": "chk_loan_settlements_different_loans"
+                },
+                {
+                  "expression": "(amount > (0)::numeric)",
+                  "name": "loan_settlements_amount_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "payable_loan_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "receivable_loan_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "settlement_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_loan_settlements_payable",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "payable_loan_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loan_settlements"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loans"
+                  }
+                },
+                {
+                  "name": "fk_loan_settlements_receivable",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "receivable_loan_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loan_settlements"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loans"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "loan_settlements_pkey"
+              },
+              "uniques": []
+            },
+            "loans": {
+              "checks": [
+                {
+                  "expression": "((due_date IS NULL) OR (due_date >= start_date))",
+                  "name": "chk_loans_due_date"
+                },
+                {
+                  "expression": "(outstanding_amount <= principal_amount)",
+                  "name": "chk_loans_outstanding"
+                },
+                {
+                  "expression": "(outstanding_amount >= (0)::numeric)",
+                  "name": "loans_outstanding_amount_check"
+                },
+                {
+                  "expression": "(principal_amount > (0)::numeric)",
+                  "name": "loans_principal_amount_check"
+                }
+              ],
+              "columns": {
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "due_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "outstanding_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "person_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "principal_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "start_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/enum@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "ACTIVE"
+                  },
+                  "nativeType": "loan_status",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "loan_status"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "LoanStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "nativeType": "loan_type",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "loan_type"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "LoanType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_loans_person",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "person_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "loans"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "people"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "loans_pkey"
+              },
+              "uniques": []
+            },
+            "people": {
+              "columns": {
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "user_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_people_user",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "user_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "people"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "people_pkey"
+              },
+              "uniques": []
+            },
             "reservation_movements": {
               "checks": [
                 {
@@ -2907,6 +7549,604 @@
                   "id"
                 ],
                 "name": "reservations_pkey"
+              },
+              "uniques": []
+            },
+            "route_companies": {
+              "checks": [
+                {
+                  "expression": "((billing_amount IS NULL) OR (billing_amount >= (0)::numeric))",
+                  "name": "route_companies_billing_amount_check"
+                },
+                {
+                  "expression": "((kilometers IS NULL) OR (kilometers >= (0)::numeric))",
+                  "name": "route_companies_kilometers_check"
+                },
+                {
+                  "expression": "(packages_received >= 0)",
+                  "name": "route_companies_packages_received_check"
+                },
+                {
+                  "expression": "(packages_undelivered >= 0)",
+                  "name": "route_companies_packages_undelivered_check"
+                },
+                {
+                  "expression": "((rate_amount IS NULL) OR (rate_amount >= (0)::numeric))",
+                  "name": "route_companies_rate_amount_check"
+                }
+              ],
+              "columns": {
+                "billing_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "company_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "company_rate_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true
+                },
+                "company_rate_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "kilometers": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "packages_received": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "packages_undelivered": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "rate_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "route_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "route_rate_amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true
+                },
+                "route_rate_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_route_companies_company",
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "company_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "companies"
+                  }
+                },
+                {
+                  "name": "fk_route_companies_company_rate",
+                  "source": {
+                    "columns": [
+                      "company_rate_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "company_rates"
+                  }
+                },
+                {
+                  "name": "fk_route_companies_route",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "route_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "routes"
+                  }
+                },
+                {
+                  "name": "fk_route_companies_route_rate",
+                  "source": {
+                    "columns": [
+                      "route_rate_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_rates"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "company_rate_id"
+                  ],
+                  "name": "idx_route_companies_company_rate",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "route_rate_id"
+                  ],
+                  "name": "idx_route_companies_route_rate",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "route_companies_pkey"
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "route_id",
+                    "company_id"
+                  ],
+                  "name": "uq_route_companies"
+                }
+              ]
+            },
+            "route_rates": {
+              "checks": [
+                {
+                  "expression": "((valid_to IS NULL) OR (valid_to >= valid_from))",
+                  "name": "chk_route_rates_dates"
+                },
+                {
+                  "expression": "(amount >= (0)::numeric)",
+                  "name": "route_rates_amount_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "route_type_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "valid_from": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "valid_to": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_route_rates_route_type",
+                  "source": {
+                    "columns": [
+                      "route_type_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_rates"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_types"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "route_type_id"
+                  ],
+                  "name": "idx_route_rates_route_type",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "route_rates_pkey"
+              },
+              "uniques": []
+            },
+            "route_types": {
+              "columns": {
+                "code": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false
+                },
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "is_active": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "is_special": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "sql/varchar@1",
+                  "nativeType": "character varying",
+                  "nullable": false
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "route_types_pkey"
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "code"
+                  ],
+                  "name": "uq_route_types_code"
+                }
+              ]
+            },
+            "routes": {
+              "checks": [
+                {
+                  "expression": "(vehicle_km_end >= vehicle_km_start)",
+                  "name": "routes_check"
+                },
+                {
+                  "expression": "(kilometers >= (0)::numeric)",
+                  "name": "routes_kilometers_check"
+                },
+                {
+                  "expression": "(packages_undelivered >= 0)",
+                  "name": "routes_packages_undelivered_check"
+                },
+                {
+                  "expression": "(vehicle_km_start >= (0)::numeric)",
+                  "name": "routes_vehicle_km_start_check"
+                }
+              ],
+              "columns": {
+                "created_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "destination_city": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int8@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int8",
+                  "nullable": false
+                },
+                "kilometers": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "packages_undelivered": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "route_code": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "route_date": {
+                  "codecId": "pg/date-temporal@1",
+                  "nativeType": "date",
+                  "nullable": false
+                },
+                "route_rate_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "route_type_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "user_id": {
+                  "codecId": "pg/int8@1",
+                  "nativeType": "int8",
+                  "nullable": true
+                },
+                "vehicle_km_end": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                },
+                "vehicle_km_start": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 12,
+                    "scale": 2
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "fk_routes_route_rate",
+                  "source": {
+                    "columns": [
+                      "route_rate_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "routes"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_rates"
+                  }
+                },
+                {
+                  "name": "fk_routes_route_type",
+                  "source": {
+                    "columns": [
+                      "route_type_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "routes"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_types"
+                  }
+                },
+                {
+                  "name": "fk_routes_user",
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "user_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "routes"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "users"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "routes_pkey"
               },
               "uniques": []
             },
@@ -3470,6 +8710,16 @@
                 "OTHER"
               ]
             },
+            "CardInstallmentStatus": {
+              "kind": "valueSet",
+              "values": [
+                "PENDING",
+                "PARTIALLY_PAID",
+                "PAID",
+                "OVERDUE",
+                "CANCELLED"
+              ]
+            },
             "CategoryType": {
               "kind": "valueSet",
               "values": [
@@ -3489,6 +8739,40 @@
                 "ADJUSTMENT"
               ]
             },
+            "InvoiceStatus": {
+              "kind": "valueSet",
+              "values": [
+                "DRAFT",
+                "ISSUED",
+                "SENT",
+                "PAID",
+                "CANCELLED"
+              ]
+            },
+            "LoanMovementType": {
+              "kind": "valueSet",
+              "values": [
+                "DISBURSEMENT",
+                "REPAYMENT",
+                "INTEREST",
+                "ADJUSTMENT"
+              ]
+            },
+            "LoanStatus": {
+              "kind": "valueSet",
+              "values": [
+                "ACTIVE",
+                "COMPLETED",
+                "CANCELLED"
+              ]
+            },
+            "LoanType": {
+              "kind": "valueSet",
+              "values": [
+                "LENT",
+                "BORROWED"
+              ]
+            },
             "ReservationMovementType": {
               "kind": "valueSet",
               "values": [
@@ -3503,6 +8787,14 @@
                 "ACTIVE",
                 "COMPLETED",
                 "CANCELLED"
+              ]
+            },
+            "RouteRateType": {
+              "kind": "valueSet",
+              "values": [
+                "PER_KILOMETER",
+                "PER_PACKAGE",
+                "FIXED"
               ]
             },
             "SyncStatus": {
@@ -3537,7 +8829,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "bdbbf79c435b8a091281912f074784f6683cc8b58354444e60259099acdca6ea"
+    "storageHash": "695168a08460efcbf20ffcc584089a26d22b8716bb11e69516db5fed23dcf384"
   },
   "capabilities": {
     "postgres": {

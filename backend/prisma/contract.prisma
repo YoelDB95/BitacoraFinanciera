@@ -11,7 +11,11 @@ namespace public {
     updatedAt          Timestamptz          @default(now()) @map("updated_at")
     accounts           Accounts[]
     categories         Categories[]
+    companies          Companies[]
     investmentAccounts InvestmentAccounts[]
+    invoices           Invoices[]
+    people             People[]
+    routes             Routes[]
     tags               Tags[]
 
     @@rls
@@ -29,6 +33,9 @@ namespace public {
     isActive           Boolean              @default(true) @map("is_active")
     createdAt          Timestamptz          @default(now()) @map("created_at")
     updatedAt          Timestamptz          @default(now()) @map("updated_at")
+    creditCardPayments CreditCardPayments[]
+    creditCards        CreditCards?
+    loanMovements      LoanMovements[]
     reservations       Reservations[]
     transactions       Transactions[]
     user               Users?               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user", index: false)
@@ -38,6 +45,29 @@ namespace public {
     @@check(expression: "(initial_balance >= (0)::numeric)", map: "chk_accounts_initial_balance")
     @@rls
     @@map("accounts")
+  }
+
+  model CreditCards {
+    id                 BigInt               @id(map: "credit_cards_pkey") @default(autoincrement())
+    accountId          BigInt               @unique(map: "credit_cards_account_id_key") @map("account_id")
+    issuer             String
+    cardBrand          String               @map("card_brand")
+    lastFourDigits     VarChar(4)?          @map("last_four_digits")
+    creditLimit        Numeric(18, 2)?      @map("credit_limit")
+    closingDay         SmallInt?            @map("closing_day")
+    dueDay             SmallInt?            @map("due_day")
+    createdAt          Timestamptz          @default(now()) @map("created_at")
+    updatedAt          Timestamptz          @default(now()) @map("updated_at")
+    cardPurchases      CardPurchases[]
+    creditCardPayments CreditCardPayments[]
+    account            Accounts             @relation(fields: [accountId], references: [id], onDelete: Cascade, map: "fk_credit_cards_account")
+
+    @@check(expression: "((last_four_digits IS NULL) OR ((last_four_digits)::text ~ '^[0-9]{4}$'::text))", map: "chk_credit_cards_last_four")
+    @@check(expression: "((closing_day >= 1) AND (closing_day <= 31))", map: "credit_cards_closing_day_check")
+    @@check(expression: "((credit_limit IS NULL) OR (credit_limit >= (0)::numeric))", map: "credit_cards_credit_limit_check")
+    @@check(expression: "((due_day >= 1) AND (due_day <= 31))", map: "credit_cards_due_day_check")
+    @@rls
+    @@map("credit_cards")
   }
 
   model Categories {
@@ -70,6 +100,7 @@ namespace public {
     externalId           VarChar(255)?              @map("external_id")
     createdAt            Timestamptz                @default(now()) @map("created_at")
     updatedAt            Timestamptz                @default(now()) @map("updated_at")
+    cardPurchases        CardPurchases[]
     externalTransactions ExternalTransactions[]
     transactionTags      TransactionTags[]
     account              Accounts                   @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_transactions_account", index: false)
@@ -79,6 +110,138 @@ namespace public {
     @@check(expression: "(amount > (0)::numeric)", map: "chk_transactions_amount")
     @@rls
     @@map("transactions")
+  }
+
+  model CardPurchases {
+    id                BigInt             @id(map: "card_purchases_pkey") @default(autoincrement())
+    creditCardId      BigInt             @map("credit_card_id")
+    transactionId     BigInt?            @map("transaction_id")
+    description       String
+    principalAmount   Numeric(18, 2)     @map("principal_amount")
+    interestAmount    Numeric(18, 2)     @default(0) @map("interest_amount")
+    totalAmount       Numeric(18, 2)     @map("total_amount")
+    purchaseDate      Date               @map("purchase_date")
+    installmentsCount Int                @default(1) @map("installments_count")
+    createdAt         Timestamptz        @default(now()) @map("created_at")
+    updatedAt         Timestamptz        @default(now()) @map("updated_at")
+    cardInstallments  CardInstallments[]
+    creditCard        CreditCards        @relation(fields: [creditCardId], references: [id], onDelete: Restrict, map: "fk_card_purchases_card", index: false)
+    transaction       Transactions?      @relation(fields: [transactionId], references: [id], onDelete: SetNull, map: "fk_card_purchases_transaction", index: false)
+
+    @@check(expression: "(installments_count > 0)", map: "card_purchases_installments_count_check")
+    @@check(expression: "(interest_amount >= (0)::numeric)", map: "card_purchases_interest_amount_check")
+    @@check(expression: "(principal_amount >= (0)::numeric)", map: "card_purchases_principal_amount_check")
+    @@check(expression: "(total_amount > (0)::numeric)", map: "card_purchases_total_amount_check")
+    @@check(expression: "(total_amount = (principal_amount + interest_amount))", map: "chk_card_purchases_total")
+    @@rls
+    @@map("card_purchases")
+  }
+
+  model CardInstallments {
+    id                     BigInt                         @id(map: "card_installments_pkey") @default(autoincrement())
+    cardPurchaseId         BigInt                         @map("card_purchase_id")
+    installmentNumber      Int                            @map("installment_number")
+    amount                 Numeric(18, 2)
+    dueDate                Date                           @map("due_date")
+    status                 pg.enum(CardInstallmentStatus) @default("PENDING")
+    paidAt                 Timestamptz?                   @map("paid_at")
+    createdAt              Timestamptz                    @default(now()) @map("created_at")
+    updatedAt              Timestamptz                    @default(now()) @map("updated_at")
+    cardPaymentAllocations CardPaymentAllocations[]
+    cardPurchase           CardPurchases                  @relation(fields: [cardPurchaseId], references: [id], onDelete: Cascade, map: "fk_card_installments_purchase", index: false)
+
+    @@unique([cardPurchaseId, installmentNumber], map: "uq_card_installments_number")
+    @@check(expression: "(amount > (0)::numeric)", map: "card_installments_amount_check")
+    @@check(expression: "(installment_number > 0)", map: "card_installments_installment_number_check")
+    @@rls
+    @@map("card_installments")
+  }
+
+  model CreditCardPayments {
+    id                     BigInt                   @id(map: "credit_card_payments_pkey") @default(autoincrement())
+    creditCardId           BigInt                   @map("credit_card_id")
+    accountId              BigInt                   @map("account_id")
+    amount                 Numeric(18, 2)
+    paymentDate            Date                     @map("payment_date")
+    description            String?
+    createdAt              Timestamptz              @default(now()) @map("created_at")
+    cardPaymentAllocations CardPaymentAllocations[]
+    account                Accounts                 @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_credit_card_payments_account", index: false)
+    creditCard             CreditCards              @relation(fields: [creditCardId], references: [id], onDelete: Restrict, map: "fk_credit_card_payments_card", index: false)
+
+    @@check(expression: "(amount > (0)::numeric)", map: "credit_card_payments_amount_check")
+    @@rls
+    @@map("credit_card_payments")
+  }
+
+  model CardPaymentAllocations {
+    paymentId     BigInt             @map("payment_id")
+    installmentId BigInt             @map("installment_id")
+    amount        Numeric(18, 2)
+    installment   CardInstallments   @relation(fields: [installmentId], references: [id], onDelete: Restrict, map: "fk_card_payment_allocations_installment", index: false)
+    payment       CreditCardPayments @relation(fields: [paymentId], references: [id], onDelete: Cascade, map: "fk_card_payment_allocations_payment", index: false)
+
+    @@id([paymentId, installmentId], map: "card_payment_allocations_pkey")
+    @@check(expression: "(amount > (0)::numeric)", map: "card_payment_allocations_amount_check")
+    @@rls
+    @@map("card_payment_allocations")
+  }
+
+  model Companies {
+    id                     BigInt                   @id(map: "companies_pkey") @default(autoincrement())
+    userId                 BigInt?                  @map("user_id")
+    cuit                   VarChar(13)
+    legalName              String                   @map("legal_name")
+    businessName           String?                  @map("business_name")
+    billingAddress         String?                  @map("billing_address")
+    billingNotes           String?                  @map("billing_notes")
+    active                 Boolean                  @default(true)
+    createdAt              Timestamptz              @default(now()) @map("created_at")
+    updatedAt              Timestamptz              @default(now()) @map("updated_at")
+    companyBillingContacts CompanyBillingContacts[]
+    companyRates           CompanyRates[]
+    invoices               Invoices[]
+    routeCompanies         RouteCompanies[]
+    user                   Users?                   @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_companies_user", index: false)
+
+    @@unique([userId, cuit], map: "uq_companies_user_cuit")
+    @@rls
+    @@map("companies")
+  }
+
+  model CompanyBillingContacts {
+    id        BigInt      @id(map: "company_billing_contacts_pkey") @default(autoincrement())
+    companyId BigInt      @map("company_id")
+    name      String
+    email     String
+    notes     String?
+    isPrimary Boolean     @default(false) @map("is_primary")
+    createdAt Timestamptz @default(now()) @map("created_at")
+    updatedAt Timestamptz @default(now()) @map("updated_at")
+    company   Companies   @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "fk_company_billing_contacts_company", index: false)
+
+    @@rls
+    @@map("company_billing_contacts")
+  }
+
+  model CompanyRates {
+    id             BigInt           @id(map: "company_rates_pkey") @default(autoincrement())
+    companyId      BigInt           @map("company_id")
+    name           VarChar
+    unit           VarChar
+    amount         Numeric
+    validFrom      Date             @map("valid_from")
+    validTo        Date?            @map("valid_to")
+    notes          String?
+    createdAt      Timestamptz      @default(now()) @map("created_at")
+    updatedAt      Timestamptz      @default(now()) @map("updated_at")
+    routeCompanies RouteCompanies[]
+    company        Companies        @relation(fields: [companyId], references: [id], map: "fk_company_rates_company", index: false)
+
+    @@check(expression: "((valid_to IS NULL) OR (valid_to >= valid_from))", map: "chk_company_rates_dates")
+    @@check(expression: "(amount > (0)::numeric)", map: "company_rates_amount_check")
+    @@rls
+    @@map("company_rates")
   }
 
   model ExternalTransactions {
@@ -144,6 +307,216 @@ namespace public {
     @@check(expression: "((quantity IS NULL) OR (quantity >= (0)::numeric))", map: "chk_investment_transaction_quantity")
     @@rls
     @@map("investment_transactions")
+  }
+
+  model Invoices {
+    id                    BigInt                  @id(map: "invoices_pkey") @default(autoincrement())
+    userId                BigInt                  @map("user_id")
+    companyId             BigInt                  @map("company_id")
+    invoiceNumber         String?                 @map("invoice_number")
+    invoiceDate           Date                    @map("invoice_date")
+    periodYear            SmallInt                @map("period_year")
+    periodMonth           SmallInt                @map("period_month")
+    subtotal              Numeric(18, 2)
+    total                 Numeric(18, 2)
+    status                pg.enum(InvoiceStatus)  @default("DRAFT")
+    sentAt                Timestamptz?            @map("sent_at")
+    paidAt                Timestamptz?            @map("paid_at")
+    notes                 String?
+    createdAt             Timestamptz             @default(now()) @map("created_at")
+    updatedAt             Timestamptz             @default(now()) @map("updated_at")
+    invoiceRouteCompanies InvoiceRouteCompanies[]
+    company               Companies               @relation(fields: [companyId], references: [id], onDelete: Restrict, map: "fk_invoices_company", index: false)
+    user                  Users                   @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_invoices_user", index: false)
+
+    @@check(expression: "((period_month >= 1) AND (period_month <= 12))", map: "invoices_period_month_check")
+    @@check(expression: "(subtotal >= (0)::numeric)", map: "invoices_subtotal_check")
+    @@check(expression: "(total >= (0)::numeric)", map: "invoices_total_check")
+    @@rls
+    @@map("invoices")
+  }
+
+  model RouteTypes {
+    id         BigInt       @id(map: "route_types_pkey") @default(autoincrement())
+    code       VarChar      @unique(map: "uq_route_types_code")
+    name       VarChar
+    isSpecial  Boolean      @default(false) @map("is_special")
+    isActive   Boolean      @default(true) @map("is_active")
+    createdAt  Timestamptz  @default(now()) @map("created_at")
+    updatedAt  Timestamptz  @default(now()) @map("updated_at")
+    routeRates RouteRates[]
+    routes     Routes[]
+
+    @@rls
+    @@map("route_types")
+  }
+
+  model RouteRates {
+    id             BigInt           @id(map: "route_rates_pkey") @default(autoincrement())
+    amount         Numeric(18, 2)
+    validFrom      Date             @map("valid_from")
+    validTo        Date?            @map("valid_to")
+    notes          String?
+    createdAt      Timestamptz      @default(now()) @map("created_at")
+    updatedAt      Timestamptz      @default(now()) @map("updated_at")
+    routeTypeId    BigInt?          @map("route_type_id")
+    routeCompanies RouteCompanies[]
+    routes         Routes[]
+    routeType      RouteTypes?      @relation(fields: [routeTypeId], references: [id], map: "fk_route_rates_route_type")
+
+    @@index([routeTypeId], map: "idx_route_rates_route_type")
+    @@check(expression: "((valid_to IS NULL) OR (valid_to >= valid_from))", map: "chk_route_rates_dates")
+    @@check(expression: "(amount >= (0)::numeric)", map: "route_rates_amount_check")
+    @@rls
+    @@map("route_rates")
+  }
+
+  model Routes {
+    id                  BigInt           @id(map: "routes_pkey") @default(autoincrement())
+    userId              BigInt?          @map("user_id")
+    routeCode           String           @map("route_code")
+    routeDate           Date             @map("route_date")
+    vehicleKmStart      Numeric(12, 2)   @map("vehicle_km_start")
+    vehicleKmEnd        Numeric(12, 2)   @map("vehicle_km_end")
+    kilometers          Numeric(12, 2)
+    destinationCity     String           @map("destination_city")
+    packagesUndelivered Int              @default(0) @map("packages_undelivered")
+    notes               String?
+    createdAt           Timestamptz      @default(now()) @map("created_at")
+    updatedAt           Timestamptz      @default(now()) @map("updated_at")
+    routeTypeId         BigInt?          @map("route_type_id")
+    routeRateId         BigInt?          @map("route_rate_id")
+    routeCompanies      RouteCompanies[]
+    routeRate           RouteRates?      @relation(fields: [routeRateId], references: [id], map: "fk_routes_route_rate", index: false)
+    routeType           RouteTypes?      @relation(fields: [routeTypeId], references: [id], map: "fk_routes_route_type", index: false)
+    user                Users?           @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_routes_user", index: false)
+
+    @@check(expression: "(vehicle_km_end >= vehicle_km_start)", map: "routes_check")
+    @@check(expression: "(kilometers >= (0)::numeric)", map: "routes_kilometers_check")
+    @@check(expression: "(packages_undelivered >= 0)", map: "routes_packages_undelivered_check")
+    @@check(expression: "(vehicle_km_start >= (0)::numeric)", map: "routes_vehicle_km_start_check")
+    @@rls
+    @@map("routes")
+  }
+
+  model RouteCompanies {
+    id                    BigInt                  @id(map: "route_companies_pkey") @default(autoincrement())
+    routeId               BigInt                  @map("route_id")
+    companyId             BigInt                  @map("company_id")
+    packagesReceived      Int                     @default(0) @map("packages_received")
+    packagesUndelivered   Int                     @default(0) @map("packages_undelivered")
+    kilometers            Numeric(12, 2)?
+    rateAmount            Numeric(18, 2)?         @map("rate_amount")
+    billingAmount         Numeric(18, 2)?         @map("billing_amount")
+    notes                 String?
+    createdAt             Timestamptz             @default(now()) @map("created_at")
+    updatedAt             Timestamptz             @default(now()) @map("updated_at")
+    routeRateId           BigInt?                 @map("route_rate_id")
+    companyRateId         BigInt?                 @map("company_rate_id")
+    routeRateAmount       Numeric?                @map("route_rate_amount")
+    companyRateAmount     Numeric?                @map("company_rate_amount")
+    invoiceRouteCompanies InvoiceRouteCompanies[]
+    company               Companies               @relation(fields: [companyId], references: [id], onDelete: Restrict, map: "fk_route_companies_company", index: false)
+    companyRate           CompanyRates?           @relation(fields: [companyRateId], references: [id], map: "fk_route_companies_company_rate")
+    route                 Routes                  @relation(fields: [routeId], references: [id], onDelete: Cascade, map: "fk_route_companies_route", index: false)
+    routeRate             RouteRates?             @relation(fields: [routeRateId], references: [id], map: "fk_route_companies_route_rate")
+
+    @@unique([routeId, companyId], map: "uq_route_companies")
+    @@index([companyRateId], map: "idx_route_companies_company_rate")
+    @@index([routeRateId], map: "idx_route_companies_route_rate")
+    @@check(expression: "((billing_amount IS NULL) OR (billing_amount >= (0)::numeric))", map: "route_companies_billing_amount_check")
+    @@check(expression: "((kilometers IS NULL) OR (kilometers >= (0)::numeric))", map: "route_companies_kilometers_check")
+    @@check(expression: "(packages_received >= 0)", map: "route_companies_packages_received_check")
+    @@check(expression: "(packages_undelivered >= 0)", map: "route_companies_packages_undelivered_check")
+    @@check(expression: "((rate_amount IS NULL) OR (rate_amount >= (0)::numeric))", map: "route_companies_rate_amount_check")
+    @@rls
+    @@map("route_companies")
+  }
+
+  model InvoiceRouteCompanies {
+    invoiceId      BigInt         @map("invoice_id")
+    routeCompanyId BigInt         @map("route_company_id")
+    amount         Numeric(18, 2)
+    invoice        Invoices       @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "fk_invoice_route_companies_invoice", index: false)
+    routeCompany   RouteCompanies @relation(fields: [routeCompanyId], references: [id], onDelete: Restrict, map: "fk_invoice_route_companies_route_company", index: false)
+
+    @@id([invoiceId, routeCompanyId], map: "invoice_route_companies_pkey")
+    @@check(expression: "(amount >= (0)::numeric)", map: "invoice_route_companies_amount_check")
+    @@rls
+    @@map("invoice_route_companies")
+  }
+
+  model People {
+    id        BigInt      @id(map: "people_pkey") @default(autoincrement())
+    userId    BigInt?     @map("user_id")
+    name      String
+    notes     String?
+    createdAt Timestamptz @default(now()) @map("created_at")
+    updatedAt Timestamptz @default(now()) @map("updated_at")
+    loans     Loans[]
+    user      Users?      @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_people_user", index: false)
+
+    @@rls
+    @@map("people")
+  }
+
+  model Loans {
+    id                             BigInt              @id(map: "loans_pkey") @default(autoincrement())
+    personId                       BigInt              @map("person_id")
+    _type                          pg.enum(LoanType)   @map("type")
+    principalAmount                Numeric(18, 2)      @map("principal_amount")
+    outstandingAmount              Numeric(18, 2)      @map("outstanding_amount")
+    description                    String?
+    startDate                      Date                @map("start_date")
+    dueDate                        Date?               @map("due_date")
+    status                         pg.enum(LoanStatus) @default("ACTIVE")
+    createdAt                      Timestamptz         @default(now()) @map("created_at")
+    updatedAt                      Timestamptz         @default(now()) @map("updated_at")
+    loanMovements                  LoanMovements[]
+    loanSettlements                LoanSettlements[]   @relation(name: "fk_loan_settlements_payable")
+    loanSettlementsLoanSettlements LoanSettlements[]   @relation(name: "fk_loan_settlements_receivable")
+    person                         People              @relation(fields: [personId], references: [id], onDelete: Restrict, map: "fk_loans_person", index: false)
+
+    @@check(expression: "((due_date IS NULL) OR (due_date >= start_date))", map: "chk_loans_due_date")
+    @@check(expression: "(outstanding_amount <= principal_amount)", map: "chk_loans_outstanding")
+    @@check(expression: "(outstanding_amount >= (0)::numeric)", map: "loans_outstanding_amount_check")
+    @@check(expression: "(principal_amount > (0)::numeric)", map: "loans_principal_amount_check")
+    @@rls
+    @@map("loans")
+  }
+
+  model LoanMovements {
+    id              BigInt                    @id(map: "loan_movements_pkey") @default(autoincrement())
+    loanId          BigInt                    @map("loan_id")
+    accountId       BigInt?                   @map("account_id")
+    _type           pg.enum(LoanMovementType) @map("type")
+    amount          Numeric(18, 2)
+    transactionDate Date                      @map("transaction_date")
+    description     String?
+    createdAt       Timestamptz               @default(now()) @map("created_at")
+    account         Accounts?                 @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_loan_movements_account", index: false)
+    loan            Loans                     @relation(fields: [loanId], references: [id], onDelete: Cascade, map: "fk_loan_movements_loan", index: false)
+
+    @@check(expression: "(amount > (0)::numeric)", map: "loan_movements_amount_check")
+    @@rls
+    @@map("loan_movements")
+  }
+
+  model LoanSettlements {
+    id               BigInt         @id(map: "loan_settlements_pkey") @default(autoincrement())
+    receivableLoanId BigInt         @map("receivable_loan_id")
+    payableLoanId    BigInt         @map("payable_loan_id")
+    amount           Numeric(18, 2)
+    settlementDate   Date           @map("settlement_date")
+    description      String?
+    createdAt        Timestamptz    @default(now()) @map("created_at")
+    payableLoan      Loans          @relation(name: "fk_loan_settlements_payable", fields: [payableLoanId], references: [id], onDelete: Restrict, map: "fk_loan_settlements_payable", index: false)
+    receivableLoan   Loans          @relation(name: "fk_loan_settlements_receivable", fields: [receivableLoanId], references: [id], onDelete: Restrict, map: "fk_loan_settlements_receivable", index: false)
+
+    @@check(expression: "(receivable_loan_id <> payable_loan_id)", map: "chk_loan_settlements_different_loans")
+    @@check(expression: "(amount > (0)::numeric)", map: "loan_settlements_amount_check")
+    @@rls
+    @@map("loan_settlements")
   }
 
   model Reservations {
@@ -244,6 +617,15 @@ namespace public {
     @@map("account_type")
   }
 
+  native_enum CardInstallmentStatus {
+    PENDING = "PENDING"
+    PARTIALLY_PAID = "PARTIALLY_PAID"
+    PAID = "PAID"
+    OVERDUE = "OVERDUE"
+    CANCELLED = "CANCELLED"
+    @@map("card_installment_status")
+  }
+
   native_enum CategoryType {
     INCOME = "INCOME"
     EXPENSE = "EXPENSE"
@@ -261,6 +643,36 @@ namespace public {
     @@map("investment_transaction_type")
   }
 
+  native_enum InvoiceStatus {
+    DRAFT = "DRAFT"
+    ISSUED = "ISSUED"
+    SENT = "SENT"
+    PAID = "PAID"
+    CANCELLED = "CANCELLED"
+    @@map("invoice_status")
+  }
+
+  native_enum LoanMovementType {
+    DISBURSEMENT = "DISBURSEMENT"
+    REPAYMENT = "REPAYMENT"
+    INTEREST = "INTEREST"
+    ADJUSTMENT = "ADJUSTMENT"
+    @@map("loan_movement_type")
+  }
+
+  native_enum LoanStatus {
+    ACTIVE = "ACTIVE"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+    @@map("loan_status")
+  }
+
+  native_enum LoanType {
+    LENT = "LENT"
+    BORROWED = "BORROWED"
+    @@map("loan_type")
+  }
+
   native_enum ReservationMovementType {
     ALLOCATE = "ALLOCATE"
     RELEASE = "RELEASE"
@@ -273,6 +685,13 @@ namespace public {
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
     @@map("reservation_status")
+  }
+
+  native_enum RouteRateType {
+    PER_KILOMETER = "PER_KILOMETER"
+    PER_PACKAGE = "PER_PACKAGE"
+    FIXED = "FIXED"
+    @@map("route_rate_type")
   }
 
   native_enum SyncStatus {

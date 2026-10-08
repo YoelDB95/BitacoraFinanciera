@@ -14,7 +14,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.22.0",
+      "version": "^12.10.1",
       "onFail": "download"
     }
   },
@@ -28,6 +28,7 @@
     "temporal-polyfill": "^1.0.5"
   },
   "devDependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "@types/express": "^5.0.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
