@@ -38,5 +38,14 @@ export const PAYMENT_METHODS = [
 
 export const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: 'dashboard', end: true },
+  {
+    label: 'Trabajo',
+    icon: 'briefcase',
+    children: [
+      { to: '/trabajo/resumen', label: 'Resumen', end: true },
+      { to: '/trabajo/empresa', label: 'Empresa', icon: 'building' },
+      { to: '/rutas', label: 'Rutas', icon: 'route' },
+    ],
+  },
   { to: '/transacciones', label: 'Transacciones', icon: 'list' },
 ]

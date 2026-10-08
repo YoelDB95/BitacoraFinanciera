@@ -138,6 +138,48 @@ const ICONS = {
       <path d="M12 8.5 13.6 11 16 12l-2.4 1L12 15.5 10.4 13 8 12l2.4-1Z" />
     </>
   ),
+  briefcase: (
+    <>
+      <rect x="3" y="7" width="18" height="14" rx="2.5" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M3 12.5h18" />
+    </>
+  ),
+  route: (
+    <>
+      <circle cx="6" cy="19" r="2.5" />
+      <circle cx="18" cy="5" r="2.5" />
+      <path d="M8.5 19H13a4 4 0 0 0 0-8h-2a4 4 0 0 1 0-8h4.5" />
+    </>
+  ),
+  building: (
+    <>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
+      <path d="M10 21v-3.5h4V21" />
+    </>
+  ),
+  package: (
+    <>
+      <path d="M12 3 3.5 7.75v8.5L12 21l8.5-4.75v-8.5L12 3Z" />
+      <path d="M3.5 7.75 12 12.5l8.5-4.75" />
+      <path d="M12 12.5V21" />
+    </>
+  ),
+  gauge: (
+    <>
+      <path d="M4.5 18a8.5 8.5 0 1 1 15 0" />
+      <path d="M12 14.5 16 9.5" />
+      <circle cx="12" cy="15.5" r="1.5" />
+    </>
+  ),
+  invoice: (
+    <>
+      <path d="M5 3h9l5 5v13H5Z" />
+      <path d="M14 3v5h5" />
+      <path d="M8.5 12.5h7M8.5 16h4.5" />
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 18, strokeWidth = 1.7, ...rest }) {

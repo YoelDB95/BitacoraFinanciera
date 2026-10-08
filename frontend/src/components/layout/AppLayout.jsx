@@ -19,9 +19,14 @@ export default function AppLayout() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [menuOpen])
 
+const isMatch = (item) =>
+    item.end ? pathname === item.to : pathname.startsWith(item.to)
+
   const current =
     NAV_ITEMS.find((item) =>
-      item.end ? pathname === item.to : pathname.startsWith(item.to),
+      item.children
+        ? item.children.some(isMatch)
+        : isMatch(item),
     ) ?? NAV_ITEMS[0]
 
   return (
@@ -47,25 +52,54 @@ export default function AppLayout() {
 
         <p className="sidebar__section">Menú</p>
         <nav className="sidebar__nav" aria-label="Navegación principal">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) =>
-                `nav-link${isActive ? ' nav-link--active' : ''}`
-              }
-            >
-              <span className="nav-link__icon">
-                <Icon name={item.icon} size={18} />
-              </span>
-              {item.label}
-              {item.to === '/transacciones' && transactions.length > 0 && (
-                <span className="nav-link__badge">{transactions.length}</span>
-              )}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.children ? (
+              <div key={item.label} className="nav-group">
+                <span className="nav-group__label">
+                  <span className="nav-link__icon">
+                    <Icon name={item.icon} size={18} />
+                  </span>
+                  {item.label}
+                </span>
+                <div className="nav-group__list">
+                  {item.children.map((child) => (
+                    <NavLink
+                      key={child.to}
+                      to={child.to}
+                      end={child.end}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `nav-link nav-link--sub${
+                          isActive ? ' nav-link--active' : ''
+                        }`
+                      }
+                    >
+                      <span className="nav-link__dot" />
+                      {child.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  `nav-link${isActive ? ' nav-link--active' : ''}`
+                }
+              >
+                <span className="nav-link__icon">
+                  <Icon name={item.icon} size={18} />
+                </span>
+                {item.label}
+                {item.to === '/transacciones' && transactions.length > 0 && (
+                  <span className="nav-link__badge">{transactions.length}</span>
+                )}
+              </NavLink>
+            ),
+          )}
         </nav>
 
         <div className="sidebar__footer">

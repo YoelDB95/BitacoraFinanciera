@@ -2,7 +2,15 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon.jsx'
 
-export default function Modal({ open, onClose, title, description, children, footer }) {
+export default function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  icon = 'receipt',
+}) {
   const panelRef = useRef(null)
 
   useEffect(() => {
@@ -45,7 +53,7 @@ export default function Modal({ open, onClose, title, description, children, foo
       >
         <div className="modal__head">
           <span className="modal__badge">
-            <Icon name="receipt" size={20} />
+            <Icon name={icon} size={20} />
           </span>
           <div>
             <h2 className="modal__title">{title}</h2>
