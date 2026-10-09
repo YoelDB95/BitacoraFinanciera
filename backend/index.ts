@@ -11,12 +11,28 @@ function toIso(value) {
   return typeof value?.toString === 'function' ? value.toString() : value;
 }
 
+function activeRateAmount(rates) {
+  const today = new Date();
+  const active =
+    rates?.find(
+      (rate) =>
+        rate.validFrom <= today &&
+        (!rate.validTo || rate.validTo >= today),
+    ) ??
+    rates?.[0];
+
+  return active ? Number(active.amount) : 0;
+}
+
 app.get('/api/companies', async (req, res) => {
   try {
     const companies = await db.orm.public.Companies
       .where((company) => company.active.eq(true))
       .include('companyBillingContacts', (contacts) =>
         contacts.select('id', 'name', 'email', 'notes', 'isPrimary')
+      )
+      .include('companyRates', (rates) =>
+        rates.select('id', 'amount', 'validFrom', 'validTo')
       )
       .all();
 
@@ -28,6 +44,7 @@ app.get('/api/companies', async (req, res) => {
       billingAddress: company.billingAddress,
       billingNotes: company.billingNotes,
       active: company.active,
+      tarifa: activeRateAmount(company.companyRates),
       createdAt: toIso(company.createdAt),
       updatedAt: toIso(company.updatedAt),
       billingContacts: (company.companyBillingContacts ?? []).map((contact) => ({

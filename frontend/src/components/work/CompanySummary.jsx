@@ -1,42 +1,48 @@
 import Icon from '../ui/Icon.jsx'
 import { formatCurrency, formatCount } from '../../lib/format.js'
-import { useCompanies } from '../../hooks/useCompanies.js'
 
-const COMPANY_ICON = {
-  'emp-andina': 'route',
-  'emp-roble': 'building',
-  'emp-sanmiguel': 'package',
-  'emp-tornillo': 'briefcase',
-}
+const CARD_COLORS = ['#4ade80', '#60a5fa', '#fbbf24', '#c084fc', '#fb7185', '#2dd4bf']
 
 export default function CompanySummary({ rows }) {
-  const { companies } = useCompanies()
-  const byCompany = new Map(rows.map((row) => [row.company.id, row]))
+  if (rows.length === 0) {
+    return (
+      <div className="card">
+        <div className="empty">
+          <span className="empty__art">
+            <Icon name="building" size={38} strokeWidth={1.4} />
+          </span>
+          <h2 className="empty__title">No hay empresas</h2>
+          <p className="empty__text">
+            Una vez que registres empresas, verás aquí su actividad en el período.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="company-grid">
-      {companies.map((company) => {
-        const row = byCompany.get(company.id)
-        const entregados = row?.entregados ?? 0
-        const noEntregados = row?.noEntregados ?? 0
-        const monto = row?.monto ?? 0
-        const rutas = row?.rutas ?? 0
-        const total = entregados + noEntregados
-        const successRate = total > 0 ? Math.round((entregados / total) * 100) : 0
+      {rows.map((row, index) => {
+        const company = row.company
+        const contact = (company.billingContacts ?? [])[0]
+        const total = row.entregados + row.noEntregados
+        const successRate =
+          total > 0 ? Math.round((row.entregados / total) * 100) : 0
+        const color = CARD_COLORS[index % CARD_COLORS.length]
 
         return (
           <article className="company-card" key={company.id}>
             <div className="company-card__top">
               <span
                 className="company-card__icon"
-                style={{ '--company-color': company.color }}
+                style={{ '--company-color': color }}
               >
-                <Icon name={COMPANY_ICON[company.id] ?? 'building'} size={18} />
+                <Icon name="building" size={18} />
               </span>
               <div className="company-card__name-wrap">
-                <h3 className="company-card__name">{company.nombre}</h3>
+                <h3 className="company-card__name">{company.legalName}</h3>
                 <p className="company-card__meta">
-                  {company.contacto} · {rutas} rutas
+                  {contact?.name || 'Sin contactos'} · {formatCount(row.rutas)} rutas
                 </p>
               </div>
             </div>
@@ -44,15 +50,19 @@ export default function CompanySummary({ rows }) {
             <dl className="company-card__stats">
               <div>
                 <dt>Entregados</dt>
-                <dd className="company-card__value">{formatCount(entregados)}</dd>
+                <dd className="company-card__value">{formatCount(row.entregados)}</dd>
                 <dd className="company-card__hint">
                   {successRate}% de éxito
                 </dd>
               </div>
               <div>
                 <dt>No entregados</dt>
-                <dd className="company-card__value company-card__value--danger">
-                  {formatCount(noEntregados)}
+                <dd
+                  className={`company-card__value${
+                    row.noEntregados > 0 ? ' company-card__value--danger' : ''
+                  }`}
+                >
+                  {formatCount(row.noEntregados)}
                 </dd>
                 <dd className="company-card__hint">
                   {total > 0 ? `${successRate}% tasa de éxito` : 'Sin actividad'}
@@ -60,7 +70,7 @@ export default function CompanySummary({ rows }) {
               </div>
               <div>
                 <dt>A facturar</dt>
-                <dd className="company-card__value">{formatCurrency(monto)}</dd>
+                <dd className="company-card__value">{formatCurrency(row.monto)}</dd>
                 <dd className="company-card__hint">en el período</dd>
               </div>
             </dl>

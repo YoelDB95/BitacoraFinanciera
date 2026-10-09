@@ -2,14 +2,19 @@ import { useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
 import { toInputDate } from '../../lib/format.js'
-import { useCompanies } from '../../hooks/useCompanies.js'
 
 function nextInvoiceNumber(count) {
   const year = new Date().getFullYear()
   return `FAC-${year}-${String(count + 1).padStart(3, '0')}`
 }
 
-export default function InvoiceModal({ open, onClose, onCreate, invoiceCount }) {
+export default function InvoiceModal({
+  open,
+  onClose,
+  onCreate,
+  invoiceCount,
+  companies = [],
+}) {
   return (
     <Modal
       open={open}
@@ -23,14 +28,14 @@ export default function InvoiceModal({ open, onClose, onCreate, invoiceCount }) 
           onDone={onClose}
           onCreate={onCreate}
           invoiceCount={invoiceCount}
+          companies={companies}
         />
       )}
     </Modal>
   )
 }
 
-function InvoiceForm({ onDone, onCreate, invoiceCount }) {
-  const { companies } = useCompanies()
+function InvoiceForm({ onDone, onCreate, invoiceCount, companies = [] }) {
   const [form, setForm] = useState({
     fecha: toInputDate(),
     empresaId: companies[0]?.id ?? '',
@@ -82,9 +87,9 @@ function InvoiceForm({ onDone, onCreate, invoiceCount }) {
             onChange={(event) => update('empresaId', event.target.value)}
             aria-invalid={Boolean(errors.empresaId)}
           >
-            {COMPANIES.map((company) => (
+            {companies.map((company) => (
               <option key={company.id} value={company.id}>
-                {company.nombre}
+                {company.legalName}
               </option>
             ))}
           </select>

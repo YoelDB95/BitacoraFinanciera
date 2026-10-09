@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
-import { COMPANIES, ROUTE_OPTIONS, CITY_OPTIONS } from '../../lib/work.js'
+import { ROUTE_OPTIONS, CITY_OPTIONS } from '../../lib/work.js'
 import { toInputDate } from '../../lib/format.js'
 
-export default function RouteModal({ open, onClose, onCreate }) {
+export default function RouteModal({ open, onClose, onCreate, companies = [] }) {
   return (
     <Modal
       open={open}
@@ -13,12 +13,14 @@ export default function RouteModal({ open, onClose, onCreate }) {
       description="Registra una ruta de reparto con las empresas involucradas."
       icon="route"
     >
-      {open && <RouteForm onDone={onClose} onCreate={onCreate} />}
+      {open && (
+        <RouteForm onDone={onClose} onCreate={onCreate} companies={companies} />
+      )}
     </Modal>
   )
 }
 
-function RouteForm({ onDone, onCreate }) {
+function RouteForm({ onDone, onCreate, companies = [] }) {
   const [form, setForm] = useState({
     fecha: toInputDate(),
     routeCode: '',
@@ -47,7 +49,7 @@ function RouteForm({ onDone, onCreate }) {
     .filter(Boolean)
 
   const availableCompanies = (rowIndex) =>
-    COMPANIES.filter(
+    companies.filter(
       (company) =>
         company.id === empresas[rowIndex].companyId ||
         !usedCompanyIds.includes(company.id),
@@ -261,7 +263,7 @@ function RouteForm({ onDone, onCreate }) {
                     </option>
                     {availableCompanies(index).map((company) => (
                       <option key={company.id} value={company.id}>
-                        {company.nombre}
+                        {company.legalName}
                       </option>
                     ))}
                   </select>
@@ -295,7 +297,7 @@ function RouteForm({ onDone, onCreate }) {
             </div>
           ))}
 
-          {usedCompanyIds.length < COMPANIES.length && (
+          {usedCompanyIds.length < companies.length && (
             <button
               type="button"
               className="route-company__add"
