@@ -4,7 +4,7 @@ import {
   createCompany as createCompanyRequest,
   getCompanies as getCompaniesRequest,
   fromApiCompany,
-} from '../lib/companiesApi.js'
+} from '../lib/api.js'
 import { CompaniesContext } from './CompaniesContext.js'
 
 const COMPANY_COLORS = [

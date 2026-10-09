@@ -54,13 +54,7 @@ export default function Empresa() {
   const handleCreate = useCallback(
     async (values) => {
       try {
-        await createCompany({
-          legalName: values.nombre,
-          cuit: values.cuit,
-          billingAddress: values.direccionFacturacion || null,
-          billingContactEmail: values.correo || null,
-          billingContactNotes: values.nota || null,
-        })
+        await createCompany(values)
         setModalOpen(false)
         await load()
       } catch (err) {
