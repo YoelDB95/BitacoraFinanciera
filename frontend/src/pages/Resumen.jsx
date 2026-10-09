@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
 import DateRangeSelector from '../components/work/DateRangeSelector.jsx'
 import CompanySummary from '../components/work/CompanySummary.jsx'
+import RoutesChart from '../components/work/RoutesChart.jsx'
 import RouteModal from '../components/work/RouteModal.jsx'
 import InvoiceModal from '../components/work/InvoiceModal.jsx'
 import {
@@ -11,6 +12,7 @@ import {
   filterByPeriod,
   summarize,
   summarizeByCompany,
+  countRoutesByType,
 } from '../lib/work.js'
 import { getCompanies } from '../lib/api.js'
 import { formatCount, formatCurrency, formatDate, formatKm } from '../lib/format.js'
@@ -82,6 +84,10 @@ export default function Work() {
   const periodInvoices = useMemo(
     () => filterByPeriod(invoices, range),
     [invoices, range],
+  )
+  const routesByType = useMemo(
+    () => countRoutesByType(periodRoutes),
+    [periodRoutes],
   )
 
   const handleNewRoute = (route) => {
@@ -174,7 +180,27 @@ export default function Work() {
         </div>
       </section>
 
-      {/* 3 · Resumen de empresas */}
+      {/* 3 · Rutas realizadas */}
+      <section className="work-section" aria-label="Rutas realizadas">
+        <div className="work-section__head">
+          <div>
+            <h2 className="work-section__title">Rutas realizadas</h2>
+            <p className="work-section__subtitle">
+              Cantidad de veces que se hizo cada ruta en el período seleccionado.
+            </p>
+          </div>
+          <span className="results-count">
+            {formatCount(periodRoutes.length)} rutas
+          </span>
+        </div>
+        <div className="card work-card">
+          <div className="card__body">
+            <RoutesChart data={routesByType} total={periodRoutes.length} />
+          </div>
+        </div>
+      </section>
+
+      {/* 4 · Resumen de empresas */}
       <section className="work-section" aria-label="Resumen de empresas">
         <div className="work-section__head">
           <div>
@@ -234,7 +260,7 @@ export default function Work() {
         )}
       </section>
 
-      {/* 4 · Acciones */}
+      {/* 5 · Acciones */}
       <section className="work-section" aria-label="Acciones">
         <div className="work-section__head">
           <div>

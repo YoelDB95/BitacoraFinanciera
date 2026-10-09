@@ -6,15 +6,16 @@ function daysAgo(offset) {
   return toInputDate(date)
 }
 
-export const ROUTE_OPTIONS = [
-  'RT-101',
-  'RT-102',
-  'RT-103',
-  'RT-104',
-  'RT-105',
-  'RT-106',
-  'RT-107',
+export const ROUTE_TYPES = [
+  { label: 'PNU', aliases: ['pnu', 'rt-101'] },
+  { label: 'Ruta A', aliases: ['ruta a', 'ruta-a', 'ruta_a', 'rt-102', 'rt-107'] },
+  { label: 'Ruta B', aliases: ['ruta b', 'ruta-b', 'ruta_b', 'rt-103'] },
+  { label: 'Ruta C', aliases: ['ruta c', 'ruta-c', 'ruta_c', 'rt-104'] },
+  { label: 'Ruta D', aliases: ['ruta d', 'ruta-d', 'ruta_d', 'rt-105'] },
+  { label: 'Ruta E', aliases: ['ruta e', 'ruta-e', 'ruta_e', 'rt-106'] },
 ]
+
+export const ROUTE_OPTIONS = ROUTE_TYPES.map((type) => type.label)
 
 export const CITY_OPTIONS = [
   'Monterrey',
@@ -285,6 +286,28 @@ export function summarize(routes, companies = COMPANIES) {
     },
     { km: 0, monto: 0, entregados: 0, noEntregados: 0, rutas: 0 },
   )
+}
+
+function normalizeRouteType(code) {
+  const value = String(code ?? '').trim().toLowerCase()
+  const match = ROUTE_TYPES.find((type) => type.aliases.includes(value))
+  return match ? match.label : null
+}
+
+export function countRoutesByType(routes = [], types = ROUTE_TYPES) {
+  const counts = new Map(types.map((type) => [type.label, 0]))
+
+  for (const route of routes) {
+    const label = normalizeRouteType(route.routeCode)
+    if (label && counts.has(label)) {
+      counts.set(label, counts.get(label) + 1)
+    }
+  }
+
+  return types.map((type) => ({
+    label: type.label,
+    total: counts.get(type.label) ?? 0,
+  }))
 }
 
 export function summarizeByCompany(routes, companies = COMPANIES) {
