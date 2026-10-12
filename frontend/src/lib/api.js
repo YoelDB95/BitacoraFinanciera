@@ -59,6 +59,21 @@ function normalizeCompany(raw) {
       notes: contact?.notes ?? '',
       isPrimary: Boolean(contact?.isPrimary),
     })),
+    rates: (Array.isArray(raw.rates)
+      ? raw.rates
+      : Array.isArray(raw.companyRates)
+        ? raw.companyRates
+        : []
+    ).map((rate) => ({
+      routeTypeId: rate.route_type_id ?? rate.routeTypeId ?? '',
+      routingType: rate.routingType ?? rate.route_type_id ?? rate.routeTypeId ?? '',
+      code: rate.code ?? '',
+      name: rate.name ?? '',
+      routeRateId: rate.route_rate_id ?? rate.routeRateId ?? rate.rateId ?? '',
+      amount: Number(rate.amount ?? 0),
+      validFrom: rate.valid_from ?? rate.validFrom ?? null,
+      validTo: rate.valid_to ?? rate.validTo ?? null,
+    })),
   }
 }
 
@@ -117,4 +132,50 @@ export async function createCompany(company) {
     body: JSON.stringify(toApiPayload(company)),
   })
   return normalizeCompany(data?.company ?? data)
+}
+
+function toUpdatePayload(data = {}) {
+  const payload = {
+    legalName: data.legalName ?? '',
+    businessName: data.businessName ?? null,
+    billingAddress: data.billingAddress ?? null,
+    billingNotes: data.billingNotes ?? null,
+    billingContactName: data.billingContactName ?? null,
+    billingContactEmail: data.billingContactEmail ?? null,
+  }
+  if (data.billingContactNotes) {
+    payload.billingContactNotes = data.billingContactNotes
+  }
+  return payload
+}
+
+export async function updateCompany(id, data) {
+  const response = await request(`/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(toUpdatePayload(data)),
+  })
+  return normalizeCompany(response)
+}
+
+export async function updateCompanyRate(routingType, data) {
+  const response = await request(`/rate/${encodeURIComponent(routingType ?? '')}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+  return response
+}
+
+export async function getRates() {
+  const data = await request('/rate')
+  const list = Array.isArray(data) ? data : (data?.data ?? [])
+  return (Array.isArray(list) ? list : []).map((rate) => ({
+    routeTypeId: rate.route_type_id ?? rate.routeTypeId ?? '',
+    routingType: rate.routingType ?? rate.route_type_id ?? rate.routeTypeId ?? '',
+    code: rate.code ?? '',
+    name: rate.name ?? '',
+    routeRateId: rate.route_rate_id ?? rate.routeRateId ?? rate.rateId ?? '',
+    amount: Number(rate.amount ?? 0),
+    validFrom: rate.valid_from ?? rate.validFrom ?? null,
+    validTo: rate.valid_to ?? rate.validTo ?? null,
+  }))
 }

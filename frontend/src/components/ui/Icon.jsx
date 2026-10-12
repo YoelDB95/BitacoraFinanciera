@@ -57,6 +57,11 @@ const ICONS = {
       <path d="m19 12-7 7-7-7" />
     </>
   ),
+  chevronRight: (
+    <>
+      <path d="m9 6 6 6-6 6" />
+    </>
+  ),
   trash: (
     <>
       <path d="M4 7h16" />

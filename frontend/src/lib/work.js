@@ -81,6 +81,7 @@ export const ENVIO_FACTURACION_OPTIONS = [
   { value: 'correo', label: 'Correo electrónico' },
   { value: 'domicilio', label: 'Dirección de facturación' },
   { value: 'personal', label: 'Entrega personal' },
+  {value: 'watsapp', label: 'WhatsApp'},
 ]
 
 export const ENVIO_FACTURACION_LABELS = ENVIO_FACTURACION_OPTIONS.reduce(

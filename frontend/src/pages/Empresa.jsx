@@ -3,7 +3,13 @@ import Icon from '../components/ui/Icon.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
 import CompanyCard from '../components/work/CompanyCard.jsx'
 import CompanyModal from '../components/work/CompanyModal.jsx'
-import { getCompanies, createCompany } from '../lib/api.js'
+import CompanyDetailModal from '../components/work/CompanyDetailModal.jsx'
+import {
+  getCompanies,
+  createCompany,
+  updateCompany,
+  updateCompanyRate,
+} from '../lib/api.js'
 import { formatCount } from '../lib/format.js'
 
 async function fetchCompanies() {
@@ -16,12 +22,18 @@ export default function Empresa() {
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (selectId) => {
     try {
-      setCompanies(await fetchCompanies())
+      const list = await fetchCompanies()
+      setCompanies(list)
       setError('')
       setStatus('ready')
+      if (selectId) {
+        setSelectedCompany(list.find((item) => item.id === selectId) ?? null)
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'No se pudieron cargar las empresas.',
@@ -66,6 +78,27 @@ export default function Empresa() {
     [load],
   )
 
+  const handleOpenDetail = useCallback((company) => {
+    setSelectedCompany(company)
+    setDetailOpen(true)
+  }, [])
+
+  const handleSaveInfo = useCallback(
+    async (id, data) => {
+      await updateCompany(id, data)
+      await load(id)
+    },
+    [load],
+  )
+
+  const handleSaveRate = useCallback(
+    async (routingType, data) => {
+      await updateCompanyRate(routingType, data)
+      await load(selectedCompany?.id)
+    },
+    [load, selectedCompany],
+  )
+
   const companyCount = companies.length
 
   const body = useMemo(() => {
@@ -91,11 +124,16 @@ export default function Empresa() {
     return (
       <div className="company-grid">
         {companies.map((company, index) => (
-          <CompanyCard key={company.id} company={company} index={index} />
+          <CompanyCard
+            key={company.id}
+            company={company}
+            index={index}
+            onClick={() => handleOpenDetail(company)}
+          />
         ))}
       </div>
     )
-  }, [companyCount, companies])
+  }, [companyCount, companies, handleOpenDetail])
 
   return (
     <>
@@ -155,7 +193,11 @@ export default function Empresa() {
             title="No se pudieron cargar las empresas"
             text={error}
             action={
-              <button type="button" className="button button--primary" onClick={load}>
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => load()}
+              >
                 <Icon name="close" size={16} />
                 Reintentar
               </button>
@@ -178,6 +220,14 @@ export default function Empresa() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreate={handleCreate}
+      />
+
+      <CompanyDetailModal
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        company={selectedCompany}
+        onSaveInfo={handleSaveInfo}
+        onSaveRate={handleSaveRate}
       />
     </>
   )

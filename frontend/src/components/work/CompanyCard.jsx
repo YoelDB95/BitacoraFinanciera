@@ -2,7 +2,7 @@ import Icon from '../ui/Icon.jsx'
 
 const CARD_COLORS = ['#4ade80', '#60a5fa', '#fbbf24', '#c084fc', '#fb7185', '#2dd4bf']
 
-export default function CompanyCard({ company, index = 0 }) {
+export default function CompanyCard({ company, index = 0, onClick }) {
   const contacts = company.billingContacts ?? []
   const primary = contacts.find((contact) => contact.isPrimary) ?? contacts[0]
   const color = CARD_COLORS[index % CARD_COLORS.length]
@@ -15,7 +15,19 @@ export default function CompanyCard({ company, index = 0 }) {
     '—'
 
   return (
-    <article className="company-card">
+    <article
+      className="company-card company-card--action"
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick?.()
+        }
+      }}
+      aria-label={`Ver y editar ${company.legalName}`}
+    >
       <div className="company-card__top">
         <span className="company-card__icon" style={{ '--company-color': color }}>
           <Icon name="building" size={18} />
@@ -48,6 +60,11 @@ export default function CompanyCard({ company, index = 0 }) {
           <dd>{notes}</dd>
         </div>
       </dl>
+
+      <span className="company-card__open">
+        Ver y editar
+        <Icon name="chevronRight" size={14} />
+      </span>
     </article>
   )
 }
