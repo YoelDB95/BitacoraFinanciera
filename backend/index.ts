@@ -1,6 +1,6 @@
 import express from 'express';
 import "temporal-polyfill/full/global";
-import companiesRouter from './src/controllers/companies';
+import companiesRouter from './src/modules/work/companies/companies.routes';
 
 const app = express();
 

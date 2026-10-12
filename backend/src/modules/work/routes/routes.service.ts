@@ -1,0 +1,3 @@
+/*
+        Contiene las reglas de negocio y coordina operaciones entre entidades.
+*/
