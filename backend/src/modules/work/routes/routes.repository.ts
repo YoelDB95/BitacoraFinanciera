@@ -39,4 +39,16 @@ const getRouteRates = async () => {
   return await runtime.query(plan);
 }
 
-export default { getRouteRates }
+const getRoutes = () => {
+ return db.orm.public.Routes
+  .include('routeCompanies', (routeCompanies) =>
+    routeCompanies.select('id', 'companyId', 'routeId', 'billingAmount', 'rateAmount', 'kilometers', 'packagesReceived', 'packagesUndelivered')
+  )
+  .all()
+}
+
+const createRoute = (route) => {
+
+}
+
+export default { getRouteRates, getRoutes, createRoute }

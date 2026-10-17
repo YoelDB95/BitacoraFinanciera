@@ -1,20 +1,37 @@
-import { Router } from 'express'; 
-import { db } from "../../../prisma/db.js";
-
 /*
-        Recibe la petición HTTP, extrae los datos y devuelve la respuesta.
+Recibe la petición HTTP, extrae los datos y devuelve la respuesta.
 */
-const router = Router()
 
-router.get('/', (req, res) => {
-    const routes = db.orm.public.Routes
-        .include('routeCompanies', (routeCompanies) =>
-            routeCompanies.select('id', 'companyId', 'routeId', 'billingAmount', 'rateAmount', 'kilometers', 'packagesReceived', 'packagesUndelivered')
-        )
-        .all()
-    res.json(routes)
-})
+import { type Request, type Response } from 'express';
+import routesService from "./routes.service.js";
 
-router.post('/', async (req, res) => {
 
-})
+
+const getRoutes = async (req: Request, res: Response): Promise<Response> => {
+    try {
+       const routes = await routesService.getRoutes()
+        return res.status(200).json(routes)
+
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({error: 'error'})
+    }
+}
+
+const createRoute = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        console.log('llegue');
+        
+        const route = req.body
+        const response = routesService.createRoute(route)
+        return res.status(201).json(response)
+    } catch(e) {
+        console.error(e)
+        return res.status(500).json({error: 'error'})
+    }
+}
+
+export default {
+    getRoutes,
+    createRoute
+}

@@ -3,7 +3,6 @@
 */
 
 import { Router } from 'express';
-import { type Request, type Response } from 'express';
 import companieController from './companies.controller';
 
 const router = Router()

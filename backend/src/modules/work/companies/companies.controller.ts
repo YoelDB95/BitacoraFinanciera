@@ -1,3 +1,7 @@
+/*
+Recibe la petición HTTP, extrae los datos y devuelve la respuesta.
+*/
+
 import companiesService from './companies.service';
 import { type Request, type Response } from 'express';
 import {toIso, activeRateAmount} from '../../../lib/utils'
