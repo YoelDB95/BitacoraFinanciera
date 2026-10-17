@@ -5,7 +5,8 @@
 
 import companiesRepository from './companies.repository'
 import { toIso } from '../../../lib/utils';
-import { CreateCompanyInput } from './companies.types';
+import { CreateCompanyInput, RoutingType } from './companies.types';
+import routesRepository from '../routes/routes.repository';
 
 const createCompany = async (body: CreateCompanyInput) => {
   const company = await companiesRepository.createCompany(body);
@@ -34,10 +35,16 @@ const createCompany = async (body: CreateCompanyInput) => {
 
 const getCompanies = () => companiesRepository.getAllCompanies()
 
-const getRouteRates = () => companiesRepository.getRates()
+const getCompanyRates = async (routingType: RoutingType) => {
+  const companyRate = routingType === 'ROUTE' ? await routesRepository.getRouteRates() : await companiesRepository.getPackageRates()
+  return {
+    routingType,
+    companyRate
+  };
+}
 
 export default {
   createCompany,
   getCompanies,
-  getRouteRates,
+  getCompanyRates,
 }

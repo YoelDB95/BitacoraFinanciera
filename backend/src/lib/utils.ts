@@ -1,6 +1,5 @@
-export const toIso = (value) => {
-  return typeof value?.toString === 'function' ? value.toString() : value;
-};
+export const toIso = (value: { toString(): string } | null | undefined): string =>
+  value == null ? '' : value.toString();
 
 export const activeRateAmount = (rates: any[]) => {
   const today = new Date();

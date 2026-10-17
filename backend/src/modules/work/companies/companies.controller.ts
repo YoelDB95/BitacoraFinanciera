@@ -1,7 +1,7 @@
 import companiesService from './companies.service';
 import { type Request, type Response } from 'express';
 import {toIso, activeRateAmount} from '../../../lib/utils'
-import type { CreateCompanyInput } from './companies.types';
+import type { CreateCompanyInput, RoutingType } from './companies.types';
 
 
 const getCompanies = async (req: Request, res: Response): Promise<Response> => {
@@ -26,9 +26,10 @@ const getCompanies = async (req: Request, res: Response): Promise<Response> => {
         notes: contact.notes,
         isPrimary: contact.isPrimary,
       })),
+      routingType: company.routingType,
     }));
 
-    return res.status(201).json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'No se pudieron obtener las empresas' });
@@ -52,18 +53,19 @@ const createCompany = async (req: Request<Record<string, string>, unknown, Creat
   }
 }
 
-const getRouteRates = async (req: Request, res: Response): Promise<Response> => {
+const getCompanyRates = async (req: Request, res: Response): Promise<Response> => {  
+  const routingType = req.params.routingType as RoutingType
   try {
-    const routeRates = await companiesService.getRouteRates();
+    const routeRates = await companiesService.getCompanyRates(routingType);
     return res.json(routeRates);
   } catch(error) {
     console.error(error);
-    return res.status(500).json({ error: 'No se pudieron obtener las tarifas de ruta' });
+    return res.status(500).json({ error: 'No se pudieron obtener las tarifas de la compania' });
   }
 }
 
 export default {
   getCompanies,
   createCompany,
-  getRouteRates,
+  getCompanyRates,
 };

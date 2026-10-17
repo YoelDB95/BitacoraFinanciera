@@ -12,6 +12,6 @@ router.get('/', companieController.getCompanies)
 
 router.post('/', companieController.createCompany)
 
-router.get('/rate', companieController.getRouteRates)
+router.get('/rate/:routingType', companieController.getCompanyRates)
 
 export default router

@@ -4,11 +4,11 @@
 namespace public {
   model Users {
     id                 Uuid                 @id(map: "users_pkey") @default(sql`gen_random_uuid()`)
-    createdAt          Timestamptz          @default(now()) @map("created_at")
+    createdAt          TimestamptzString    @default(now()) @map("created_at")
     email              String               @unique(map: "users_email_key")
     name               VarChar
     passwordHash       VarChar              @map("password_hash")
-    updatedAt          Timestamptz          @default(now()) @map("updated_at")
+    updatedAt          TimestamptzString    @default(now()) @map("updated_at")
     accounts           Accounts[]
     categories         Categories[]
     companies          Companies[]
@@ -24,14 +24,14 @@ namespace public {
 
   model Accounts {
     id                 Uuid                 @id(map: "accounts_pkey") @default(sql`gen_random_uuid()`)
-    createdAt          Timestamptz          @default(now()) @map("created_at")
+    createdAt          TimestamptzString    @default(now()) @map("created_at")
     currency           VarChar              @default("ARS")
     initialBalance     Numeric              @default(0) @map("initial_balance")
     isActive           Boolean              @default(true) @map("is_active")
     name               VarChar
     provider           VarChar?
     _type              pg.enum(AccountType) @map("type")
-    updatedAt          Timestamptz          @default(now()) @map("updated_at")
+    updatedAt          TimestamptzString    @default(now()) @map("updated_at")
     userId             Uuid?                @map("user_id")
     creditCardPayments CreditCardPayments[]
     creditCards        CreditCards?
@@ -52,12 +52,12 @@ namespace public {
     accountId          Uuid                 @unique(map: "credit_cards_account_id_key") @map("account_id")
     cardBrand          String               @map("card_brand")
     closingDay         SmallInt?            @map("closing_day")
-    createdAt          Timestamptz          @default(now()) @map("created_at")
+    createdAt          TimestamptzString    @default(now()) @map("created_at")
     creditLimit        Numeric?             @map("credit_limit")
     dueDay             SmallInt?            @map("due_day")
     issuer             String
     lastFourDigits     VarChar?             @map("last_four_digits")
-    updatedAt          Timestamptz          @default(now()) @map("updated_at")
+    updatedAt          TimestamptzString    @default(now()) @map("updated_at")
     cardPurchases      CardPurchases[]
     creditCardPayments CreditCardPayments[]
     account            Accounts             @relation(fields: [accountId], references: [id], map: "fk_credit_cards_account")
@@ -72,12 +72,12 @@ namespace public {
 
   model Categories {
     id           Uuid                  @id(map: "categories_pkey") @default(sql`gen_random_uuid()`)
-    createdAt    Timestamptz           @default(now()) @map("created_at")
+    createdAt    TimestamptzString     @default(now()) @map("created_at")
     icon         VarChar?
     name         VarChar
     parentId     Uuid?                 @map("parent_id")
     _type        pg.enum(CategoryType) @map("type")
-    updatedAt    Timestamptz           @default(now()) @map("updated_at")
+    updatedAt    TimestamptzString     @default(now()) @map("updated_at")
     userId       Uuid?                 @map("user_id")
     transactions Transactions[]
     parent       Categories?           @relation(name: "fk_categories_parent", fields: [parentId], references: [id], map: "fk_categories_parent", index: false)
@@ -93,13 +93,13 @@ namespace public {
     accountId            Uuid                       @map("account_id")
     amount               Numeric
     categoryId           Uuid?                      @map("category_id")
-    createdAt            Timestamptz                @default(now()) @map("created_at")
+    createdAt            TimestamptzString          @default(now()) @map("created_at")
     description          String?
     externalId           VarChar?                   @map("external_id")
     source               pg.enum(TransactionSource) @default("MANUAL")
-    transactionDate      Timestamptz                @map("transaction_date")
+    transactionDate      TimestamptzString          @map("transaction_date")
     _type                pg.enum(TransactionType)   @map("type")
-    updatedAt            Timestamptz                @default(now()) @map("updated_at")
+    updatedAt            TimestamptzString          @default(now()) @map("updated_at")
     cardPurchases        CardPurchases[]
     externalTransactions ExternalTransactions[]
     transactionTags      TransactionTags[]
@@ -113,16 +113,16 @@ namespace public {
 
   model CardPurchases {
     id                Uuid               @id(map: "card_purchases_pkey") @default(sql`gen_random_uuid()`)
-    createdAt         Timestamptz        @default(now()) @map("created_at")
+    createdAt         TimestamptzString  @default(now()) @map("created_at")
     creditCardId      Uuid               @map("credit_card_id")
     description       String
     installmentsCount Int                @default(1) @map("installments_count")
     interestAmount    Numeric            @default(0) @map("interest_amount")
     principalAmount   Numeric            @map("principal_amount")
-    purchaseDate      Date               @map("purchase_date")
+    purchaseDate      DateString         @map("purchase_date")
     totalAmount       Numeric            @map("total_amount")
     transactionId     Uuid?              @map("transaction_id")
-    updatedAt         Timestamptz        @default(now()) @map("updated_at")
+    updatedAt         TimestamptzString  @default(now()) @map("updated_at")
     cardInstallments  CardInstallments[]
     creditCard        CreditCards        @relation(fields: [creditCardId], references: [id], map: "fk_card_purchases_card", index: false)
     transaction       Transactions?      @relation(fields: [transactionId], references: [id], map: "fk_card_purchases_transaction", index: false)
@@ -139,12 +139,12 @@ namespace public {
     id                     Uuid                           @id(map: "card_installments_pkey") @default(sql`gen_random_uuid()`)
     amount                 Numeric
     cardPurchaseId         Uuid                           @map("card_purchase_id")
-    createdAt              Timestamptz                    @default(now()) @map("created_at")
-    dueDate                Date                           @map("due_date")
+    createdAt              TimestamptzString              @default(now()) @map("created_at")
+    dueDate                DateString                     @map("due_date")
     installmentNumber      Int                            @map("installment_number")
-    paidAt                 Timestamptz?                   @map("paid_at")
+    paidAt                 TimestamptzString?             @map("paid_at")
     status                 pg.enum(CardInstallmentStatus) @default("PENDING")
-    updatedAt              Timestamptz                    @default(now()) @map("updated_at")
+    updatedAt              TimestamptzString              @default(now()) @map("updated_at")
     cardPaymentAllocations CardPaymentAllocations[]
     cardPurchase           CardPurchases                  @relation(fields: [cardPurchaseId], references: [id], map: "fk_card_installments_purchase", index: false)
 
@@ -158,10 +158,10 @@ namespace public {
     id                     Uuid                     @id(map: "credit_card_payments_pkey") @default(sql`gen_random_uuid()`)
     accountId              Uuid                     @map("account_id")
     amount                 Numeric
-    createdAt              Timestamptz              @default(now()) @map("created_at")
+    createdAt              TimestamptzString        @default(now()) @map("created_at")
     creditCardId           Uuid                     @map("credit_card_id")
     description            String?
-    paymentDate            Date                     @map("payment_date")
+    paymentDate            DateString               @map("payment_date")
     cardPaymentAllocations CardPaymentAllocations[]
     account                Accounts                 @relation(fields: [accountId], references: [id], map: "fk_credit_card_payments_account", index: false)
     creditCard             CreditCards              @relation(fields: [creditCardId], references: [id], map: "fk_credit_card_payments_card", index: false)
@@ -176,7 +176,7 @@ namespace public {
     installmentId Uuid               @map("installment_id")
     paymentId     Uuid               @map("payment_id")
     installment   CardInstallments   @relation(fields: [installmentId], references: [id], map: "fk_card_payment_allocations_installment", index: false)
-    payment       CreditCardPayments @relation(fields: [paymentId], references: [id], map: "fk_card_payment_allocations_payment", index: false)
+    payment       CreditCardPayments @relation(fields: [paymentId], references: [id], map: "fk_card_payment_allocations_payment", index: "card_payment_allocations_pkey")
 
     @@id([paymentId, installmentId], map: "card_payment_allocations_pkey")
     @@check(expression: "(amount > (0)::numeric)", map: "card_payment_allocations_amount_check")
@@ -190,11 +190,12 @@ namespace public {
     billingAddress         String?                  @map("billing_address")
     billingNotes           String?                  @map("billing_notes")
     businessName           String?                  @map("business_name")
-    createdAt              Timestamptz              @default(now()) @map("created_at")
+    createdAt              TimestamptzString        @default(now()) @map("created_at")
     cuit                   VarChar
     legalName              String                   @map("legal_name")
-    updatedAt              Timestamptz              @default(now()) @map("updated_at")
+    updatedAt              TimestamptzString        @default(now()) @map("updated_at")
     userId                 Uuid?                    @map("user_id")
+    routingType            pg.enum(RoutingType)     @default("ROUTE") @map("routing_type")
     companyBillingContacts CompanyBillingContacts[]
     companyRates           CompanyRates[]
     invoices               Invoices[]
@@ -206,33 +207,33 @@ namespace public {
   }
 
   model CompanyBillingContacts {
-    id        Uuid        @id(map: "company_billing_contacts_pkey") @default(sql`gen_random_uuid()`)
-    companyId Uuid        @map("company_id")
-    createdAt Timestamptz @default(now()) @map("created_at")
+    id        Uuid              @id(map: "company_billing_contacts_pkey") @default(sql`gen_random_uuid()`)
+    companyId Uuid              @map("company_id")
+    createdAt TimestamptzString @default(now()) @map("created_at")
     email     String
-    isPrimary Boolean     @default(false) @map("is_primary")
+    isPrimary Boolean           @default(false) @map("is_primary")
     name      String
     notes     String?
-    updatedAt Timestamptz @default(now()) @map("updated_at")
-    company   Companies   @relation(fields: [companyId], references: [id], map: "fk_company_billing_contacts_company", index: false)
+    updatedAt TimestamptzString @default(now()) @map("updated_at")
+    company   Companies         @relation(fields: [companyId], references: [id], map: "fk_company_billing_contacts_company", index: false)
 
     @@rls
     @@map("company_billing_contacts")
   }
 
   model CompanyRates {
-    id             Uuid             @id(map: "company_rates_pkey") @default(sql`gen_random_uuid()`)
+    id             Uuid              @id(map: "company_rates_pkey") @default(sql`gen_random_uuid()`)
     amount         Numeric
-    companyId      Uuid             @map("company_id")
-    createdAt      Timestamptz      @default(now()) @map("created_at")
+    companyId      Uuid              @map("company_id")
+    createdAt      TimestamptzString @default(now()) @map("created_at")
     name           VarChar
     notes          String?
     unit           VarChar
-    updatedAt      Timestamptz      @default(now()) @map("updated_at")
-    validFrom      Date             @map("valid_from")
-    validTo        Date?            @map("valid_to")
+    updatedAt      TimestamptzString @default(now()) @map("updated_at")
+    validFrom      DateString        @map("valid_from")
+    validTo        DateString?       @map("valid_to")
     routeCompanies RouteCompanies[]
-    company        Companies        @relation(fields: [companyId], references: [id], map: "fk_company_rates_company", index: false)
+    company        Companies         @relation(fields: [companyId], references: [id], map: "fk_company_rates_company", index: false)
 
     @@check(expression: "(amount > (0)::numeric)", map: "company_rates_amount_check")
     @@rls
@@ -242,7 +243,7 @@ namespace public {
   model ExternalTransactions {
     id            Uuid                       @id(map: "external_transactions_pkey") @default(sql`gen_random_uuid()`)
     externalId    VarChar                    @map("external_id")
-    importedAt    Timestamptz                @default(now()) @map("imported_at")
+    importedAt    TimestamptzString          @default(now()) @map("imported_at")
     rawData       Jsonb?                     @map("raw_data")
     source        pg.enum(TransactionSource)
     transactionId Uuid?                      @map("transaction_id")
@@ -253,16 +254,16 @@ namespace public {
   }
 
   model InvestmentAccounts {
-    id            Uuid          @id(map: "investment_accounts_pkey") @default(sql`gen_random_uuid()`)
-    accountNumber VarChar?      @map("account_number")
-    createdAt     Timestamptz   @default(now()) @map("created_at")
-    currency      VarChar       @default("ARS")
+    id            Uuid              @id(map: "investment_accounts_pkey") @default(sql`gen_random_uuid()`)
+    accountNumber VarChar?          @map("account_number")
+    createdAt     TimestamptzString @default(now()) @map("created_at")
+    currency      VarChar           @default("ARS")
     name          VarChar
     provider      VarChar?
-    updatedAt     Timestamptz   @default(now()) @map("updated_at")
-    userId        Uuid?         @map("user_id")
+    updatedAt     TimestamptzString @default(now()) @map("updated_at")
+    userId        Uuid?             @map("user_id")
     investments   Investments[]
-    user          Users?        @relation(fields: [userId], references: [id], map: "fk_investment_accounts_user", index: false)
+    user          Users?            @relation(fields: [userId], references: [id], map: "fk_investment_accounts_user", index: false)
 
     @@rls
     @@map("investment_accounts")
@@ -270,13 +271,13 @@ namespace public {
 
   model Investments {
     id                     Uuid                     @id(map: "investments_pkey") @default(sql`gen_random_uuid()`)
-    createdAt              Timestamptz              @default(now()) @map("created_at")
+    createdAt              TimestamptzString        @default(now()) @map("created_at")
     currency               VarChar                  @default("ARS")
     investmentAccountId    Uuid                     @map("investment_account_id")
     name                   VarChar
     symbol                 VarChar?
     _type                  pg.enum(InvestmentType)  @map("type")
-    updatedAt              Timestamptz              @default(now()) @map("updated_at")
+    updatedAt              TimestamptzString        @default(now()) @map("updated_at")
     investmentTransactions InvestmentTransactions[]
     investmentAccount      InvestmentAccounts       @relation(fields: [investmentAccountId], references: [id], map: "fk_investments_account", index: false)
 
@@ -287,12 +288,12 @@ namespace public {
   model InvestmentTransactions {
     id              Uuid                               @id(map: "investment_transactions_pkey") @default(sql`gen_random_uuid()`)
     amount          Numeric
-    createdAt       Timestamptz                        @default(now()) @map("created_at")
+    createdAt       TimestamptzString                  @default(now()) @map("created_at")
     description     String?
     investmentId    Uuid                               @map("investment_id")
     price           Numeric?
     quantity        Numeric?
-    transactionDate Timestamptz                        @map("transaction_date")
+    transactionDate TimestamptzString                  @map("transaction_date")
     _type           pg.enum(InvestmentTransactionType) @map("type")
     investment      Investments                        @relation(fields: [investmentId], references: [id], map: "fk_investment_transactions_investment", index: false)
 
@@ -306,18 +307,18 @@ namespace public {
   model Invoices {
     id                    Uuid                    @id(map: "invoices_pkey") @default(sql`gen_random_uuid()`)
     companyId             Uuid                    @map("company_id")
-    createdAt             Timestamptz             @default(now()) @map("created_at")
-    invoiceDate           Date                    @map("invoice_date")
+    createdAt             TimestamptzString       @default(now()) @map("created_at")
+    invoiceDate           DateString              @map("invoice_date")
     invoiceNumber         String?                 @map("invoice_number")
     notes                 String?
-    paidAt                Timestamptz?            @map("paid_at")
+    paidAt                TimestamptzString?      @map("paid_at")
     periodMonth           SmallInt                @map("period_month")
     periodYear            SmallInt                @map("period_year")
-    sentAt                Timestamptz?            @map("sent_at")
+    sentAt                TimestamptzString?      @map("sent_at")
     status                pg.enum(InvoiceStatus)  @default("DRAFT")
     subtotal              Numeric
     total                 Numeric
-    updatedAt             Timestamptz             @default(now()) @map("updated_at")
+    updatedAt             TimestamptzString       @default(now()) @map("updated_at")
     userId                Uuid                    @map("user_id")
     invoiceRouteCompanies InvoiceRouteCompanies[]
     company               Companies               @relation(fields: [companyId], references: [id], map: "fk_invoices_company", index: false)
@@ -331,13 +332,13 @@ namespace public {
   }
 
   model RouteTypes {
-    id         Uuid         @id(map: "route_types_pkey") @default(sql`gen_random_uuid()`)
-    code       VarChar      @unique(map: "route_types_code_key")
-    createdAt  Timestamptz  @default(now()) @map("created_at")
-    isActive   Boolean      @default(true) @map("is_active")
-    isSpecial  Boolean      @default(false) @map("is_special")
+    id         Uuid              @id(map: "route_types_pkey") @default(sql`gen_random_uuid()`)
+    code       VarChar           @unique(map: "route_types_code_key")
+    createdAt  TimestamptzString @default(now()) @map("created_at")
+    isActive   Boolean           @default(true) @map("is_active")
+    isSpecial  Boolean           @default(false) @map("is_special")
     name       VarChar
-    updatedAt  Timestamptz  @default(now()) @map("updated_at")
+    updatedAt  TimestamptzString @default(now()) @map("updated_at")
     routeRates RouteRates[]
     routes     Routes[]
 
@@ -346,17 +347,17 @@ namespace public {
   }
 
   model RouteRates {
-    id             Uuid             @id(map: "route_rates_pkey") @default(sql`gen_random_uuid()`)
+    id             Uuid              @id(map: "route_rates_pkey") @default(sql`gen_random_uuid()`)
     amount         Numeric
-    createdAt      Timestamptz      @default(now()) @map("created_at")
+    createdAt      TimestamptzString @default(now()) @map("created_at")
     notes          String?
-    routeTypeId    Uuid?            @map("route_type_id")
-    updatedAt      Timestamptz      @default(now()) @map("updated_at")
-    validFrom      Date             @map("valid_from")
-    validTo        Date?            @map("valid_to")
+    routeTypeId    Uuid?             @map("route_type_id")
+    updatedAt      TimestamptzString @default(now()) @map("updated_at")
+    validFrom      DateString        @map("valid_from")
+    validTo        DateString?       @map("valid_to")
     routeCompanies RouteCompanies[]
     routes         Routes[]
-    routeType      RouteTypes?      @relation(fields: [routeTypeId], references: [id], map: "fk_route_rates_route_type", index: false)
+    routeType      RouteTypes?       @relation(fields: [routeTypeId], references: [id], map: "fk_route_rates_route_type", index: false)
 
     @@check(expression: "(amount >= (0)::numeric)", map: "route_rates_amount_check")
     @@rls
@@ -364,24 +365,24 @@ namespace public {
   }
 
   model Routes {
-    id                  Uuid             @id(map: "routes_pkey") @default(sql`gen_random_uuid()`)
-    createdAt           Timestamptz      @default(now()) @map("created_at")
-    destinationCity     String           @map("destination_city")
+    id                  Uuid              @id(map: "routes_pkey") @default(sql`gen_random_uuid()`)
+    createdAt           TimestamptzString @default(now()) @map("created_at")
+    destinationCity     String            @map("destination_city")
     kilometers          Numeric
     notes               String?
-    packagesUndelivered Int              @default(0) @map("packages_undelivered")
-    routeCode           String           @map("route_code")
-    routeDate           Date             @map("route_date")
-    routeRateId         Uuid?            @map("route_rate_id")
-    routeTypeId         Uuid?            @map("route_type_id")
-    updatedAt           Timestamptz      @default(now()) @map("updated_at")
-    userId              Uuid?            @map("user_id")
-    vehicleKmEnd        Numeric          @map("vehicle_km_end")
-    vehicleKmStart      Numeric          @map("vehicle_km_start")
+    packagesUndelivered Int               @default(0) @map("packages_undelivered")
+    routeCode           String            @map("route_code")
+    routeDate           DateString        @map("route_date")
+    routeRateId         Uuid?             @map("route_rate_id")
+    routeTypeId         Uuid?             @map("route_type_id")
+    updatedAt           TimestamptzString @default(now()) @map("updated_at")
+    userId              Uuid?             @map("user_id")
+    vehicleKmEnd        Numeric           @map("vehicle_km_end")
+    vehicleKmStart      Numeric           @map("vehicle_km_start")
     routeCompanies      RouteCompanies[]
-    routeRate           RouteRates?      @relation(fields: [routeRateId], references: [id], map: "fk_routes_route_rate", index: false)
-    routeType           RouteTypes?      @relation(fields: [routeTypeId], references: [id], map: "fk_routes_route_type", index: false)
-    user                Users?           @relation(fields: [userId], references: [id], map: "fk_routes_user", index: false)
+    routeRate           RouteRates?       @relation(fields: [routeRateId], references: [id], map: "fk_routes_route_rate", index: false)
+    routeType           RouteTypes?       @relation(fields: [routeTypeId], references: [id], map: "fk_routes_route_type", index: false)
+    user                Users?            @relation(fields: [userId], references: [id], map: "fk_routes_user", index: false)
 
     @@check(expression: "(vehicle_km_end >= vehicle_km_start)", map: "check_route_kilometers")
     @@check(expression: "(kilometers >= (0)::numeric)", map: "routes_kilometers_check")
@@ -398,7 +399,7 @@ namespace public {
     companyId             Uuid                    @map("company_id")
     companyRateAmount     Numeric?                @map("company_rate_amount")
     companyRateId         Uuid?                   @map("company_rate_id")
-    createdAt             Timestamptz             @default(now()) @map("created_at")
+    createdAt             TimestamptzString       @default(now()) @map("created_at")
     kilometers            Numeric?
     notes                 String?
     packagesReceived      Int                     @default(0) @map("packages_received")
@@ -407,7 +408,7 @@ namespace public {
     routeId               Uuid                    @map("route_id")
     routeRateAmount       Numeric?                @map("route_rate_amount")
     routeRateId           Uuid?                   @map("route_rate_id")
-    updatedAt             Timestamptz             @default(now()) @map("updated_at")
+    updatedAt             TimestamptzString       @default(now()) @map("updated_at")
     invoiceRouteCompanies InvoiceRouteCompanies[]
     company               Companies               @relation(fields: [companyId], references: [id], map: "fk_route_companies_company", index: false)
     companyRate           CompanyRates?           @relation(fields: [companyRateId], references: [id], map: "fk_route_companies_company_rate", index: false)
@@ -427,7 +428,7 @@ namespace public {
     amount         Numeric
     invoiceId      Uuid           @map("invoice_id")
     routeCompanyId Uuid           @map("route_company_id")
-    invoice        Invoices       @relation(fields: [invoiceId], references: [id], map: "fk_invoice_route_companies_invoice", index: false)
+    invoice        Invoices       @relation(fields: [invoiceId], references: [id], map: "fk_invoice_route_companies_invoice", index: "invoice_route_companies_pkey")
     routeCompany   RouteCompanies @relation(fields: [routeCompanyId], references: [id], map: "fk_invoice_route_companies_route_company", index: false)
 
     @@id([invoiceId, routeCompanyId], map: "invoice_route_companies_pkey")
@@ -437,14 +438,14 @@ namespace public {
   }
 
   model People {
-    id        Uuid        @id(map: "people_pkey") @default(sql`gen_random_uuid()`)
-    createdAt Timestamptz @default(now()) @map("created_at")
+    id        Uuid              @id(map: "people_pkey") @default(sql`gen_random_uuid()`)
+    createdAt TimestamptzString @default(now()) @map("created_at")
     name      String
     notes     String?
-    updatedAt Timestamptz @default(now()) @map("updated_at")
-    userId    Uuid?       @map("user_id")
+    updatedAt TimestamptzString @default(now()) @map("updated_at")
+    userId    Uuid?             @map("user_id")
     loans     Loans[]
-    user      Users?      @relation(fields: [userId], references: [id], map: "fk_people_user", index: false)
+    user      Users?            @relation(fields: [userId], references: [id], map: "fk_people_user", index: false)
 
     @@rls
     @@map("people")
@@ -452,16 +453,16 @@ namespace public {
 
   model Loans {
     id                             Uuid                @id(map: "loans_pkey") @default(sql`gen_random_uuid()`)
-    createdAt                      Timestamptz         @default(now()) @map("created_at")
+    createdAt                      TimestamptzString   @default(now()) @map("created_at")
     description                    String?
-    dueDate                        Date?               @map("due_date")
+    dueDate                        DateString?         @map("due_date")
     outstandingAmount              Numeric             @map("outstanding_amount")
     personId                       Uuid                @map("person_id")
     principalAmount                Numeric             @map("principal_amount")
-    startDate                      Date                @map("start_date")
+    startDate                      DateString          @map("start_date")
     status                         pg.enum(LoanStatus) @default("ACTIVE")
     _type                          pg.enum(LoanType)   @map("type")
-    updatedAt                      Timestamptz         @default(now()) @map("updated_at")
+    updatedAt                      TimestamptzString   @default(now()) @map("updated_at")
     loanMovements                  LoanMovements[]
     loanSettlements                LoanSettlements[]   @relation(name: "fk_loan_settlements_payable")
     loanSettlementsLoanSettlements LoanSettlements[]   @relation(name: "fk_loan_settlements_receivable")
@@ -477,10 +478,10 @@ namespace public {
     id              Uuid                      @id(map: "loan_movements_pkey") @default(sql`gen_random_uuid()`)
     accountId       Uuid?                     @map("account_id")
     amount          Numeric
-    createdAt       Timestamptz               @default(now()) @map("created_at")
+    createdAt       TimestamptzString         @default(now()) @map("created_at")
     description     String?
     loanId          Uuid                      @map("loan_id")
-    transactionDate Date                      @map("transaction_date")
+    transactionDate DateString                @map("transaction_date")
     _type           pg.enum(LoanMovementType) @map("type")
     account         Accounts?                 @relation(fields: [accountId], references: [id], map: "fk_loan_movements_account", index: false)
     loan            Loans                     @relation(fields: [loanId], references: [id], map: "fk_loan_movements_loan", index: false)
@@ -491,15 +492,15 @@ namespace public {
   }
 
   model LoanSettlements {
-    id               Uuid        @id(map: "loan_settlements_pkey") @default(sql`gen_random_uuid()`)
+    id               Uuid              @id(map: "loan_settlements_pkey") @default(sql`gen_random_uuid()`)
     amount           Numeric
-    createdAt        Timestamptz @default(now()) @map("created_at")
+    createdAt        TimestamptzString @default(now()) @map("created_at")
     description      String?
-    payableLoanId    Uuid        @map("payable_loan_id")
-    receivableLoanId Uuid        @map("receivable_loan_id")
-    settlementDate   Date        @map("settlement_date")
-    payableLoan      Loans       @relation(name: "fk_loan_settlements_payable", fields: [payableLoanId], references: [id], map: "fk_loan_settlements_payable", index: false)
-    receivableLoan   Loans       @relation(name: "fk_loan_settlements_receivable", fields: [receivableLoanId], references: [id], map: "fk_loan_settlements_receivable", index: false)
+    payableLoanId    Uuid              @map("payable_loan_id")
+    receivableLoanId Uuid              @map("receivable_loan_id")
+    settlementDate   DateString        @map("settlement_date")
+    payableLoan      Loans             @relation(name: "fk_loan_settlements_payable", fields: [payableLoanId], references: [id], map: "fk_loan_settlements_payable", index: false)
+    receivableLoan   Loans             @relation(name: "fk_loan_settlements_receivable", fields: [receivableLoanId], references: [id], map: "fk_loan_settlements_receivable", index: false)
 
     @@check(expression: "(amount > (0)::numeric)", map: "loan_settlements_amount_check")
     @@rls
@@ -509,8 +510,8 @@ namespace public {
   model Reservations {
     id                   Uuid                       @id(map: "reservations_pkey") @default(sql`gen_random_uuid()`)
     accountId            Uuid                       @map("account_id")
-    completedAt          Timestamptz?               @map("completed_at")
-    createdAt            Timestamptz                @default(now()) @map("created_at")
+    completedAt          TimestamptzString?         @map("completed_at")
+    createdAt            TimestamptzString          @default(now()) @map("created_at")
     currentAmount        Numeric                    @default(0) @map("current_amount")
     name                 VarChar
     status               pg.enum(ReservationStatus) @default("ACTIVE")
@@ -527,10 +528,10 @@ namespace public {
   model ReservationMovements {
     id              Uuid                             @id(map: "reservation_movements_pkey") @default(sql`gen_random_uuid()`)
     amount          Numeric
-    createdAt       Timestamptz                      @default(now()) @map("created_at")
+    createdAt       TimestamptzString                @default(now()) @map("created_at")
     description     String?
     reservationId   Uuid                             @map("reservation_id")
-    transactionDate Timestamptz                      @map("transaction_date")
+    transactionDate TimestamptzString                @map("transaction_date")
     _type           pg.enum(ReservationMovementType) @map("type")
     reservation     Reservations                     @relation(fields: [reservationId], references: [id], map: "fk_reservation_movements_reservation", index: false)
 
@@ -542,10 +543,10 @@ namespace public {
   model SyncLogs {
     id         Uuid                       @id(map: "sync_logs_pkey") @default(sql`gen_random_uuid()`)
     details    Jsonb?
-    finishedAt Timestamptz?               @map("finished_at")
+    finishedAt TimestamptzString?         @map("finished_at")
     message    String?
     source     pg.enum(TransactionSource)
-    startedAt  Timestamptz                @map("started_at")
+    startedAt  TimestamptzString          @map("started_at")
     status     pg.enum(SyncStatus)
 
     @@rls
@@ -555,7 +556,7 @@ namespace public {
   model Tags {
     id              Uuid              @id(map: "tags_pkey") @default(sql`gen_random_uuid()`)
     color           VarChar?
-    createdAt       Timestamptz       @default(now()) @map("created_at")
+    createdAt       TimestamptzString @default(now()) @map("created_at")
     name            VarChar
     userId          Uuid?             @map("user_id")
     transactionTags TransactionTags[]
@@ -569,7 +570,7 @@ namespace public {
     tagId         Uuid         @map("tag_id")
     transactionId Uuid         @map("transaction_id")
     tag           Tags         @relation(fields: [tagId], references: [id], map: "fk_transaction_tags_tag", index: false)
-    transaction   Transactions @relation(fields: [transactionId], references: [id], map: "fk_transaction_tags_transaction", index: false)
+    transaction   Transactions @relation(fields: [transactionId], references: [id], map: "fk_transaction_tags_transaction", index: "transaction_tags_pkey")
 
     @@id([transactionId, tagId], map: "transaction_tags_pkey")
     @@rls
@@ -577,15 +578,15 @@ namespace public {
   }
 
   model Transfers {
-    id              Uuid        @id(map: "transfers_pkey") @default(sql`gen_random_uuid()`)
+    id              Uuid              @id(map: "transfers_pkey") @default(sql`gen_random_uuid()`)
     amount          Numeric
-    createdAt       Timestamptz @default(now()) @map("created_at")
+    createdAt       TimestamptzString @default(now()) @map("created_at")
     description     String?
-    fromAccountId   Uuid        @map("from_account_id")
-    toAccountId     Uuid        @map("to_account_id")
-    transactionDate Timestamptz @map("transaction_date")
-    fromAccount     Accounts    @relation(name: "fk_transfers_from_account", fields: [fromAccountId], references: [id], map: "fk_transfers_from_account", index: false)
-    toAccount       Accounts    @relation(name: "fk_transfers_to_account", fields: [toAccountId], references: [id], map: "fk_transfers_to_account", index: false)
+    fromAccountId   Uuid              @map("from_account_id")
+    toAccountId     Uuid              @map("to_account_id")
+    transactionDate TimestamptzString @map("transaction_date")
+    fromAccount     Accounts          @relation(name: "fk_transfers_from_account", fields: [fromAccountId], references: [id], map: "fk_transfers_from_account", index: false)
+    toAccount       Accounts          @relation(name: "fk_transfers_to_account", fields: [toAccountId], references: [id], map: "fk_transfers_to_account", index: false)
 
     @@check(expression: "(amount > (0)::numeric)", map: "transfers_amount_check")
     @@rls
@@ -688,6 +689,12 @@ namespace public {
     PER_PACKAGE = "PER_PACKAGE"
     FIXED = "FIXED"
     @@map("route_rate_type")
+  }
+
+  native_enum RoutingType {
+    ROUTE = "ROUTE"
+    PACKAGE = "PACKAGE"
+    @@map("routing_type")
   }
 
   native_enum SyncStatus {

@@ -1,5 +1,3 @@
-import { Temporal } from "temporal-polyfill";
-
 export interface CreateCompanyInput {
   cuit: string;
   legalName: string;
@@ -9,17 +7,21 @@ export interface CreateCompanyInput {
   billingContactName?: string | null;
   billingContactEmail?: string | null;
   billingContactNotes?: string | null;
+  routingType?: RoutingType | null;
 }
 
 export interface Company {
-  createdAt: Temporal.Instant;
+  createdAt: string;
   id: string;
-  updatedAt: Temporal.Instant;
-  userId: string;
+  updatedAt: string;
+  userId: string | null;
   active: boolean;
-  billingAddress: string;
-  billingNotes: string;
-  businessName: string;
+  billingAddress: string | null;
+  billingNotes: string | null;
+  businessName: string | null;
   cuit: string;
   legalName: string;
+  routingType: RoutingType;
 }
+
+export type RoutingType = 'ROUTE' | 'PACKAGE'
