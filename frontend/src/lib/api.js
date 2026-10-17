@@ -34,6 +34,22 @@ async function request(path = '', options = {}) {
   }
 }
 
+function normalizeRate(rate = {}, routingType = '') {
+  return {
+    id: rate.id ?? rate.route_rate_id ?? rate.routeRateId ?? rate.rateId ?? '',
+    routeTypeId: rate.route_type_id ?? rate.routeTypeId ?? '',
+    routingType: rate.routingType ?? routingType ?? '',
+    code: rate.code ?? '',
+    name: rate.name ?? '',
+    unit: rate.unit ?? '',
+    notes: rate.notes ?? '',
+    companyId: rate.company_id ?? rate.companyId ?? '',
+    amount: Number(rate.amount ?? 0),
+    validFrom: rate.valid_from ?? rate.validFrom ?? null,
+    validTo: rate.valid_to ?? rate.validTo ?? null,
+  }
+}
+
 function normalizeCompany(raw) {
   if (!raw || typeof raw !== 'object') return null
 
@@ -49,6 +65,7 @@ function normalizeCompany(raw) {
     billingAddress: raw.billingAddress ?? '',
     billingNotes: raw.billingNotes ?? '',
     active: raw.active ?? true,
+    routingType: raw.routingType ?? raw.routing_type ?? '',
     tarifa: Number(raw.tarifa ?? 0),
     createdAt: raw.createdAt ?? null,
     updatedAt: raw.updatedAt ?? null,
@@ -64,16 +81,7 @@ function normalizeCompany(raw) {
       : Array.isArray(raw.companyRates)
         ? raw.companyRates
         : []
-    ).map((rate) => ({
-      routeTypeId: rate.route_type_id ?? rate.routeTypeId ?? '',
-      routingType: rate.routingType ?? rate.route_type_id ?? rate.routeTypeId ?? '',
-      code: rate.code ?? '',
-      name: rate.name ?? '',
-      routeRateId: rate.route_rate_id ?? rate.routeRateId ?? rate.rateId ?? '',
-      amount: Number(rate.amount ?? 0),
-      validFrom: rate.valid_from ?? rate.validFrom ?? null,
-      validTo: rate.valid_to ?? rate.validTo ?? null,
-    })),
+    ).map((rate) => normalizeRate(rate)),
   }
 }
 
@@ -95,6 +103,7 @@ export function toApiPayload(company = {}) {
     billingContactName: company.billingContactName ?? legalName,
     billingContactEmail: company.billingContactEmail ?? company.correo ?? null,
     billingContactNotes: buildContactNotes(company) || null,
+    routingType: company.routingType ?? null,
   }
 }
 
@@ -165,17 +174,19 @@ export async function updateCompanyRate(routingType, data) {
   return response
 }
 
-export async function getRates() {
-  const data = await request('/rate')
-  const list = Array.isArray(data) ? data : (data?.data ?? [])
-  return (Array.isArray(list) ? list : []).map((rate) => ({
-    routeTypeId: rate.route_type_id ?? rate.routeTypeId ?? '',
-    routingType: rate.routingType ?? rate.route_type_id ?? rate.routeTypeId ?? '',
-    code: rate.code ?? '',
-    name: rate.name ?? '',
-    routeRateId: rate.route_rate_id ?? rate.routeRateId ?? rate.rateId ?? '',
-    amount: Number(rate.amount ?? 0),
-    validFrom: rate.valid_from ?? rate.validFrom ?? null,
-    validTo: rate.valid_to ?? rate.validTo ?? null,
-  }))
+export async function getRates(routingType) {
+  const fallback = routingType ?? 'ROUTE'
+  const data = await request(`/rate/${encodeURIComponent(fallback)}`)
+  const resultType = data?.routingType ?? fallback
+  const list = Array.isArray(data?.companyRate)
+    ? data.companyRate
+    : Array.isArray(data)
+      ? data
+      : (data?.data ?? [])
+  return {
+    routingType: resultType,
+    rates: (Array.isArray(list) ? list : []).map((rate) =>
+      normalizeRate(rate, resultType),
+    ),
+  }
 }

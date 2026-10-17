@@ -15,16 +15,31 @@ function buildForm(company) {
     billingNotes: company?.billingNotes ?? '',
     billingContactName: primary?.name ?? '',
     billingContactEmail: primary?.email ?? '',
+    routingType: company?.routingType ?? ''
   }
+}
+
+function rateKey(rate) {
+  return rate.id || rate.routeTypeId || rate.routeRateId || rate.name
 }
 
 function rateInputsFrom(list) {
   return Object.fromEntries(
-    list.map((rate) => [
-      rate.routeTypeId,
+    (Array.isArray(list) ? list : []).map((rate) => [
+      rateKey(rate),
       rate.amount ? String(rate.amount) : '',
     ]),
   )
+}
+
+function readRates(result, fallbackKind) {
+  const routingType = result?.routingType ?? fallbackKind
+  const list = Array.isArray(result?.rates)
+    ? result.rates
+    : Array.isArray(result)
+      ? result
+      : []
+  return { routingType, list }
 }
 
 function rateName(rate) {
@@ -36,7 +51,9 @@ function rateName(rate) {
 function rateBadge(rate) {
   if (rate.code) return rate.code
   const match = /ruta\s+([a-e])/i.exec(rate.name ?? '')
-  return match ? match[1].toUpperCase() : '—'
+  if (match) return match[1].toUpperCase()
+  const initial = (rate.name ?? '').trim().charAt(0).toUpperCase()
+  return initial || '—'
 }
 
 export default function CompanyDetailModal({
@@ -70,6 +87,7 @@ export default function CompanyDetailModal({
 function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
   const [form, setForm] = useState(() => buildForm(company))
   const [rates, setRates] = useState([])
+  const [rateKind, setRateKind] = useState(company.routingType || 'ROUTE')
   const [rateInputs, setRateInputs] = useState({})
   const [ratesStatus, setRatesStatus] = useState('loading')
   const [ratesError, setRatesError] = useState('')
@@ -79,9 +97,14 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
 
   useEffect(() => {
     let active = true
-    getRates()
-      .then((list) => {
+    getRates(company.routingType || 'ROUTE')
+      .then((result) => {
         if (!active) return
+        const { routingType, list } = readRates(
+          result,
+          company.routingType || 'ROUTE',
+        )
+        setRateKind(routingType)
         setRates(list)
         setRateInputs(rateInputsFrom(list))
         setRatesStatus('ready')
@@ -98,7 +121,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
     return () => {
       active = false
     }
-  }, [company.id])
+  }, [company.id, company.routingType])
 
   const loadRates = useCallback(async (showLoading = false) => {
     if (showLoading) {
@@ -106,7 +129,12 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
       setRatesError('')
     }
     try {
-      const list = await getRates()
+      const result = await getRates(company.routingType || 'ROUTE')
+      const { routingType, list } = readRates(
+        result,
+        company.routingType || 'ROUTE',
+      )
+      setRateKind(routingType)
       setRates(list)
       setRateInputs(rateInputsFrom(list))
       setRatesStatus('ready')
@@ -116,7 +144,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
       )
       setRatesStatus('error')
     }
-  }, [])
+  }, [company.routingType])
 
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -139,19 +167,19 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
   }
 
   const handleSubmitRate = async (rate) => {
-    const amount = Number.parseFloat(rateInputs[rate.routeTypeId])
+    const key = rateKey(rate)
+    const amount = Number.parseFloat(rateInputs[key])
     if (!Number.isFinite(amount) || amount < 0) {
       setError(`Ingresa una tarifa válida para ${rateName(rate)}.`)
       return
     }
-    setSavingRateId(rate.routeTypeId)
+    setSavingRateId(key)
     setError('')
     try {
-      const routingType = rate.routingType || rate.routeTypeId
-      await onSaveRate(routingType, {
-        route_type_id: rate.routeTypeId,
-        amount,
-      })
+      const payload = rate.routeTypeId
+        ? { route_type_id: rate.routeTypeId, amount }
+        : { id: rate.id, amount }
+      await onSaveRate(company.routingType || 'ROUTE', payload)
       await loadRates()
     } catch (err) {
       setError(
@@ -162,13 +190,20 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
     }
   }
 
+  const isPackage = rateKind === 'PACKAGE'
+
   return (
     <>
-      <section className="company-detail__rates" aria-label="Tarifas por ruta">
+      <section
+        className="company-detail__rates"
+        aria-label={isPackage ? 'Tarifas por paquete' : 'Tarifas por ruta'}
+      >
         <span className="company-detail__label">
           CUIT <strong>{company.cuit || '—'}</strong>
         </span>
-        <h3 className="company-detail__rates-title">Tarifas por ruta</h3>
+        <h3 className="company-detail__rates-title">
+          {isPackage ? 'Tarifas por paquete' : 'Tarifas por ruta'}
+        </h3>
 
         {ratesStatus === 'loading' ? (
           <p className="company-detail__rates-empty">Cargando tarifas…</p>
@@ -189,13 +224,17 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
           </p>
         ) : (
           <ul className="rate-list">
-            {rates.map((rate) => (
-              <li
-                className="rate-list__row"
-                key={rate.routeTypeId || rate.routeRateId}
-              >
+            {rates.map((rate) => {
+              const key = rateKey(rate)
+              return (
+              <li className="rate-list__row" key={key}>
                 <span className="rate-list__badge">{rateBadge(rate)}</span>
-                <span className="rate-list__name">{rateName(rate)}</span>
+                <span className="rate-list__name">
+                  {rateName(rate)}
+                  {rate.unit && (
+                    <span className="rate-list__unit">{rate.unit}</span>
+                  )}
+                </span>
                 <span className="rate-list__current">
                   {formatCurrency(rate.amount)}
                 </span>
@@ -206,11 +245,11 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
                     min="0"
                     step="0.01"
                     inputMode="decimal"
-                    value={rateInputs[rate.routeTypeId] ?? ''}
+                    value={rateInputs[key] ?? ''}
                     onChange={(event) => {
                       setRateInputs((current) => ({
                         ...current,
-                        [rate.routeTypeId]: event.target.value,
+                        [key]: event.target.value,
                       }))
                       setError('')
                     }}
@@ -221,14 +260,15 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
                     type="button"
                     className="button button--primary"
                     onClick={() => handleSubmitRate(rate)}
-                    disabled={savingRateId === rate.routeTypeId}
+                    disabled={savingRateId === key}
                   >
                     <Icon name="check" size={14} />
-                    {savingRateId === rate.routeTypeId ? 'Guardando…' : 'Actualizar'}
+                    {savingRateId === key ? 'Guardando…' : 'Actualizar'}
                   </button>
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       </section>

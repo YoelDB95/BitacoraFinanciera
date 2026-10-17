@@ -3,6 +3,8 @@ import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
 import { ENVIO_FACTURACION_OPTIONS } from '../../lib/work.js'
 
+const RATE_TYPE_OPTIONS = ['ROUTE', 'PACKAGE']
+
 function formatCuit(raw) {
   const digits = String(raw).replace(/\D/g, '').slice(0, 11)
   if (digits.length <= 2) return digits
@@ -55,6 +57,7 @@ function CompanyForm({ onDone, onCreate }) {
     nota: '',
     correo: '',
     envioFacturacion: '',
+    routingType: '',
   })
   const [errors, setErrors] = useState({})
 
@@ -73,6 +76,8 @@ function CompanyForm({ onDone, onCreate }) {
       nextErrors.correo = 'Ingresa un correo electrónico válido.'
     if (!form.envioFacturacion)
       nextErrors.envioFacturacion = 'Elige dónde enviar la facturación.'
+    if (!form.routingType)
+      nextErrors.routingType = 'Elige el tipo de tarifa que acepta la empresa.'
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -86,6 +91,7 @@ function CompanyForm({ onDone, onCreate }) {
       nota: form.nota.trim(),
       correo: form.correo.trim(),
       envioFacturacion: form.envioFacturacion,
+      routingType: form.routingType,
     })
     onDone()
   }
@@ -179,6 +185,32 @@ function CompanyForm({ onDone, onCreate }) {
             <span className="field__error">
               <Icon name="alert" size={13} />
               {errors.envioFacturacion}
+            </span>
+          )}
+        </div>
+
+        <div className="field">
+          <label className="field__label" htmlFor="company-routing-type">
+            Tipo de tarifa <span>*</span>
+          </label>
+          <select
+            id="company-routing-type"
+            className="select"
+            value={form.routingType}
+            onChange={(event) => update('routingType', event.target.value)}
+            aria-invalid={Boolean(errors.routingType)}
+          >
+            <option value="">Selecciona…</option>
+            {RATE_TYPE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          {errors.routingType && (
+            <span className="field__error">
+              <Icon name="alert" size={13} />
+              {errors.routingType}
             </span>
           )}
         </div>
