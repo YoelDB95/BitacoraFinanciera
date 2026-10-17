@@ -5,5 +5,5 @@ dist/
 .claude/
 .cursor/
 .devin/
-
+coverage/
 *.sql
