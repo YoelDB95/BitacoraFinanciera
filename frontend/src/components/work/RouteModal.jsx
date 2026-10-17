@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
-import { ROUTE_OPTIONS, CITY_OPTIONS } from '../../lib/work.js'
+import { ROUTE_OPTIONS } from '../../lib/work.js'
 import { toInputDate } from '../../lib/format.js'
 
 export default function RouteModal({ open, onClose, onCreate, companies = [] }) {
@@ -158,20 +158,14 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
         <label className="field__label" htmlFor="route-city">
           Ciudad <span>*</span>
         </label>
-        <select
+        <input
           id="route-city"
-          className="select"
+          className="input"
           value={form.city}
           onChange={(event) => update('city', event.target.value)}
+          placeholder="Ej. Monterrey"
           aria-invalid={Boolean(errors.city)}
-        >
-          <option value="">Seleccionar…</option>
-          {CITY_OPTIONS.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
+        />
         {errors.city && (
           <span className="field__error">
             <Icon name="alert" size={13} />

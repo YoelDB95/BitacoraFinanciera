@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { loadRoutes, saveRoutes, SEED_COMPANIES } from '../lib/routeStorage.js'
+import { useCallback, useEffect, useState } from 'react'
+import { loadRoutes, saveRoutes } from '../lib/routeStorage.js'
 import { RoutesContext } from './RoutesContext.js'
+
+function createRouteId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `rt-${crypto.randomUUID()}`
+  }
+  return `rt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
 
 export function RoutesProvider({ children }) {
   const [routes, setRoutes] = useState(loadRoutes)
@@ -9,37 +16,19 @@ export function RoutesProvider({ children }) {
     saveRoutes(routes)
   }, [routes])
 
-  const updateRoute = useCallback((id, changes) => {
-    setRoutes((current) =>
-      current.map((item) => (item.id === id ? { ...item, ...changes } : item)),
-    )
+  const addRoute = useCallback((route) => {
+    const id = route.id ?? createRouteId()
+    setRoutes((current) => [{ ...route, id }, ...current])
+    return id
   }, [])
 
   const removeRoute = useCallback((id) => {
     setRoutes((current) => current.filter((item) => item.id !== id))
   }, [])
 
-  const companies = useMemo(() => SEED_COMPANIES, [])
-
-  const companyIndex = useMemo(() => {
-    return companies.reduce((acc, company) => {
-      acc[company.id] = company
-      return acc
-    }, {})
-  }, [companies])
-
-  const value = useMemo(
-    () => ({
-      routes,
-      companies,
-      companyIndex,
-      updateRoute,
-      removeRoute,
-    }),
-    [routes, companies, companyIndex, updateRoute, removeRoute],
-  )
-
   return (
-    <RoutesContext.Provider value={value}>{children}</RoutesContext.Provider>
+    <RoutesContext.Provider value={{ routes, addRoute, removeRoute }}>
+      {children}
+    </RoutesContext.Provider>
   )
 }

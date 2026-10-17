@@ -2,11 +2,11 @@ import { ENVIO_FACTURACION_LABELS } from './work.js'
 
 const API_BASE = (import.meta.env?.VITE_API_URL ?? '/api').replace(/\/+$/, '')
 
-async function request(path = '', options = {}) {
+async function send(path = '', options = {}) {
   let response
 
   try {
-    response = await fetch(`${API_BASE}/companies${path}`, {
+    response = await fetch(`${API_BASE}${path}`, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     })
@@ -32,6 +32,10 @@ async function request(path = '', options = {}) {
   } catch {
     return null
   }
+}
+
+function request(path = '', options = {}) {
+  return send(`/companies${path}`, options)
 }
 
 function normalizeRate(rate = {}, routingType = '') {
@@ -189,4 +193,30 @@ export async function getRates(routingType) {
       normalizeRate(rate, resultType),
     ),
   }
+}
+
+export function toRoutePayload(route = {}) {
+  const notes = String(route.notes ?? route.observaciones ?? '').trim()
+
+  return {
+    routeCode: String(route.routeCode ?? '').trim(),
+    routeDate: route.routeDate ?? route.fecha ?? '',
+    destinationCity: String(route.destinationCity ?? route.city ?? '').trim(),
+    vehicleKmStart: Number(route.vehicleKmStart ?? route.kmInicial ?? 0) || 0,
+    vehicleKmEnd: Number(route.vehicleKmEnd ?? route.kmFinal ?? 0) || 0,
+    notes: notes || null,
+    companies: (route.companies ?? route.empresas ?? []).map((entry) => ({
+      companyId: entry.companyId ?? '',
+      packagesReceived: Number(entry.packagesReceived ?? entry.paquetes ?? 0) || 0,
+      packagesUndelivered:
+        Number(entry.packagesUndelivered ?? entry.noEntregados ?? 0) || 0,
+    })),
+  }
+}
+
+export async function createRoute(route) {
+  return send('/routes', {
+    method: 'POST',
+    body: JSON.stringify(toRoutePayload(route)),
+  })
 }

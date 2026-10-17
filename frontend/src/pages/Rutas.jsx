@@ -2,34 +2,75 @@ import { useMemo, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
 import RouteList from '../components/routes/RouteList.jsx'
-import RouteModal from '../components/routes/RouteModal.jsx'
+import RouteModal from '../components/work/RouteModal.jsx'
 import { useRoutes } from '../hooks/useRoutes.js'
-import { formatDate } from '../lib/format.js'
+import { useCompanies } from '../hooks/useCompanies.js'
+import { createRoute } from '../lib/api.js'
+import { COMPANY_INDEX } from '../lib/work.js'
+import { formatCount, formatDate } from '../lib/format.js'
 
 const EMPTY_FILTERS = { date: '', companyId: '' }
+
+function companyLabel(company) {
+  return company?.nombre ?? company?.legalName ?? company?.name ?? 'Empresa'
+}
 
 export default function Rutas() {
   const [draft, setDraft] = useState(EMPTY_FILTERS)
   const [filters, setFilters] = useState(EMPTY_FILTERS)
-  const [editing, setEditing] = useState(null)
-  const { routes, companies, companyIndex, removeRoute } = useRoutes()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [error, setError] = useState('')
+  const { routes, addRoute, removeRoute } = useRoutes()
+  const { companies } = useCompanies()
 
-  const companyOptions = useMemo(
-    () => [
-      { value: '', label: 'Todas las empresas' },
-      ...companies.map((company) => ({ value: company.id, label: company.name })),
-    ],
+  const companyIndex = useMemo(() => {
+    const index = { ...COMPANY_INDEX }
+    for (const company of companies) {
+      index[company.id] = {
+        id: company.id,
+        nombre: companyLabel(company),
+      }
+    }
+    return index
+  }, [companies])
+
+  const modalCompanies = useMemo(
+    () => companies.map((company) => ({ id: company.id, legalName: companyLabel(company) })),
     [companies],
   )
+
+  const companyOptions = useMemo(() => {
+    const map = new Map()
+    for (const company of companies) {
+      map.set(company.id, companyLabel(company))
+    }
+    for (const route of routes) {
+      for (const entry of route.empresas ?? []) {
+        if (!map.has(entry.companyId) && companyIndex[entry.companyId]) {
+          map.set(entry.companyId, companyLabel(companyIndex[entry.companyId]))
+        }
+      }
+    }
+    return [{ value: '', label: 'Todas las empresas' }, ...[...map].map(
+      ([value, label]) => ({ value, label }),
+    )]
+  }, [companies, routes, companyIndex])
 
   const visible = useMemo(() => {
     return routes
       .filter((route) => {
-        if (filters.date && route.date !== filters.date) return false
-        if (filters.companyId && route.companyId !== filters.companyId) return false
+        if (filters.date && route.fecha !== filters.date) return false
+        if (
+          filters.companyId &&
+          !(route.empresas ?? []).some(
+            (entry) => entry.companyId === filters.companyId,
+          )
+        ) {
+          return false
+        }
         return true
       })
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0))
   }, [routes, filters])
 
   const hasFilters = filters.date !== '' || filters.companyId !== ''
@@ -45,10 +86,26 @@ export default function Rutas() {
     setFilters(EMPTY_FILTERS)
   }
 
+  const handleNewRoute = async (route) => {
+    try {
+      await createRoute(route)
+      addRoute({
+        ...route,
+        empresas: (route.empresas ?? []).map((entry, index) => ({
+          key: `r-${Date.now()}-${index}`,
+          ...entry,
+        })),
+      })
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar la ruta.')
+    }
+  }
+
   const summary = [
     filters.date ? formatDate(filters.date) : 'Todas las fechas',
     filters.companyId
-      ? companyIndex[filters.companyId]?.name ?? 'Empresa'
+      ? companyLabel(companyIndex[filters.companyId])
       : 'Todas las empresas',
   ].join(' · ')
 
@@ -64,7 +121,22 @@ export default function Rutas() {
               : `${routes.length} rutas registradas. Filtra por fecha y empresa para revisar sus entregas.`}
           </p>
         </div>
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={() => setModalOpen(true)}
+        >
+          <Icon name="plus" size={16} />
+          Nueva ruta
+        </button>
       </div>
+
+      {error && (
+        <div className="notice">
+          <Icon name="alert" size={14} />
+          <span>{error}</span>
+        </div>
+      )}
 
       <form className="card filter-panel" onSubmit={handleSearch}>
         <div className="card__head">
@@ -137,7 +209,7 @@ export default function Rutas() {
           <p className="section-head__desc">{summary}</p>
         </div>
         <span className="results-count">
-          {visible.length} de {routes.length}
+          {formatCount(visible.length)} de {formatCount(routes.length)}
         </span>
       </div>
 
@@ -145,7 +217,6 @@ export default function Rutas() {
         <RouteList
           routes={visible}
           companyIndex={companyIndex}
-          onEdit={setEditing}
           onDelete={removeRoute}
         />
       ) : (
@@ -166,12 +237,26 @@ export default function Rutas() {
               >
                 Limpiar filtros
               </button>
-            ) : undefined
+            ) : (
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => setModalOpen(true)}
+              >
+                <Icon name="plus" size={16} />
+                Nueva ruta
+              </button>
+            )
           }
         />
       )}
 
-      <RouteModal route={editing} onClose={() => setEditing(null)} />
+      <RouteModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreate={handleNewRoute}
+        companies={modalCompanies}
+      />
     </>
   )
 }
