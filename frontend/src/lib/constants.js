@@ -44,7 +44,7 @@ export const NAV_ITEMS = [
     children: [
       { to: '/trabajo/resumen', label: 'Resumen', end: true },
       { to: '/trabajo/empresa', label: 'Empresa', icon: 'building' },
-      { to: '/rutas', label: 'Rutas', icon: 'route' },
+      { to: '/rutas', label: 'Rutas', icon: 'route', end: true },
     ],
   },
   { to: '/transacciones', label: 'Transacciones', icon: 'list' },
