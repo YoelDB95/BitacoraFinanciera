@@ -167,6 +167,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
   }
 
   const handleSubmitRate = async (rate) => {
+    if (rate.isSpecial) return
     const key = rateKey(rate)
     const amount = Number.parseFloat(rateInputs[key])
     if (!Number.isFinite(amount) || amount < 0) {
@@ -176,10 +177,11 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
     setSavingRateId(key)
     setError('')
     try {
+      const routingType = company.routingType || 'ROUTE'
       const payload = rate.routeTypeId
-        ? { route_type_id: rate.routeTypeId, amount }
-        : { id: rate.id, amount }
-      await onSaveRate(company.routingType || 'ROUTE', payload)
+        ? { route_type_id: rate.routeTypeId, amount, routingType }
+        : { id: rate.id, amount, routingType }
+      await onSaveRate(routingType, payload)
       await loadRates()
     } catch (err) {
       setError(
@@ -226,6 +228,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
           <ul className="rate-list">
             {rates.map((rate) => {
               const key = rateKey(rate)
+              const isSpecial = Boolean(rate.isSpecial)
               return (
               <li className="rate-list__row" key={key}>
                 <span className="rate-list__badge">{rateBadge(rate)}</span>
@@ -233,6 +236,9 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
                   {rateName(rate)}
                   {rate.unit && (
                     <span className="rate-list__unit">{rate.unit}</span>
+                  )}
+                  {isSpecial && (
+                    <span className="rate-list__unit">especial</span>
                   )}
                 </span>
                 <span className="rate-list__current">
@@ -255,12 +261,23 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
                     }}
                     placeholder="0.00"
                     aria-label={`Nueva tarifa para ${rateName(rate)}`}
+                    disabled={isSpecial}
+                    title={
+                      isSpecial
+                        ? 'Se calcula automáticamente desde la Ruta A'
+                        : undefined
+                    }
                   />
                   <button
                     type="button"
                     className="button button--primary"
                     onClick={() => handleSubmitRate(rate)}
-                    disabled={savingRateId === key}
+                    disabled={isSpecial || savingRateId === key}
+                    title={
+                      isSpecial
+                        ? 'Se calcula automáticamente desde la Ruta A'
+                        : undefined
+                    }
                   >
                     <Icon name="check" size={14} />
                     {savingRateId === key ? 'Guardando…' : 'Actualizar'}

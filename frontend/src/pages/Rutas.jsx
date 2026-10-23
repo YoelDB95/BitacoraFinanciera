@@ -35,7 +35,12 @@ export default function Rutas() {
   }, [companies])
 
   const modalCompanies = useMemo(
-    () => companies.map((company) => ({ id: company.id, legalName: companyLabel(company) })),
+    () =>
+      companies.map((company) => ({
+        id: company.id,
+        legalName: companyLabel(company),
+        routingType: company.routingType ?? '',
+      })),
     [companies],
   )
 

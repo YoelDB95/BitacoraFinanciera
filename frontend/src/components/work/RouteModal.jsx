@@ -106,6 +106,9 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
         .map((entry) => ({
           companyId: entry.companyId,
           paquetes: Number(entry.paquetes) || 0,
+          routingType:
+            companies.find((company) => company.id === entry.companyId)
+              ?.routingType ?? '',
         })),
     })
     onDone()

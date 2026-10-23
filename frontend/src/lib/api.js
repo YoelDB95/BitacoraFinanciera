@@ -51,6 +51,7 @@ function normalizeRate(rate = {}, routingType = '') {
     amount: Number(rate.amount ?? 0),
     validFrom: rate.valid_from ?? rate.validFrom ?? null,
     validTo: rate.valid_to ?? rate.validTo ?? null,
+    isSpecial: Boolean(rate.is_special ?? rate.isSpecial ?? false),
   }
 }
 
@@ -128,6 +129,7 @@ export function fromApiCompany(raw) {
     nota: company.billingNotes || primary?.notes || '',
     envioFacturacion: '',
     tarifa: company.tarifa,
+    routingType: company.routingType,
     businessName: company.businessName,
     billingContacts: company.billingContacts,
   }
@@ -148,6 +150,8 @@ export async function createCompany(company) {
 }
 
 function toUpdatePayload(data = {}) {
+  const routingType = String(data.routingType ?? '').trim()
+
   const payload = {
     legalName: data.legalName ?? '',
     businessName: data.businessName ?? null,
@@ -155,6 +159,7 @@ function toUpdatePayload(data = {}) {
     billingNotes: data.billingNotes ?? null,
     billingContactName: data.billingContactName ?? null,
     billingContactEmail: data.billingContactEmail ?? null,
+    routingType: routingType || null,
   }
   if (data.billingContactNotes) {
     payload.billingContactNotes = data.billingContactNotes
@@ -171,9 +176,13 @@ export async function updateCompany(id, data) {
 }
 
 export async function updateCompanyRate(routingType, data) {
+  const body = {
+    ...data,
+    routingType: routingType ?? data?.routingType ?? null,
+  }
   const response = await request(`/rate/${encodeURIComponent(routingType ?? '')}`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(body),
   })
   return response
 }
@@ -210,6 +219,7 @@ export function toRoutePayload(route = {}) {
       packagesReceived: Number(entry.packagesReceived ?? entry.paquetes ?? 0) || 0,
       packagesUndelivered:
         Number(entry.packagesUndelivered ?? entry.noEntregados ?? 0) || 0,
+      routingType: entry.routingType ?? null,
     })),
   }
 }

@@ -36,6 +36,7 @@ function withDefaults(company, index) {
     envioFacturacion: company.envioFacturacion ?? '',
     zonas: company.zonas ?? [],
     tarifa: company.tarifa ?? 0,
+    routingType: company.routingType ?? '',
     color: company.color ?? COMPANY_COLORS[index % COMPANY_COLORS.length],
   }
 }
