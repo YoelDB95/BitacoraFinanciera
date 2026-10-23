@@ -3200,13 +3200,6 @@
                   "kind": "scalar"
                 }
               },
-              "kilometers": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/numeric@1",
-                  "kind": "scalar"
-                }
-              },
               "notes": {
                 "nullable": true,
                 "type": {
@@ -3215,14 +3208,14 @@
                 }
               },
               "packagesReceived": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
               "packagesUndelivered": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -3250,6 +3243,13 @@
                 }
               },
               "routeRateId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "routeTypeId": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/uuid@1",
@@ -3343,6 +3343,22 @@
                   "model": "RouteRates",
                   "namespace": "public"
                 }
+              },
+              "routeType": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "routeTypeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RouteTypes",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -3365,9 +3381,6 @@
                 "id": {
                   "column": "id"
                 },
-                "kilometers": {
-                  "column": "kilometers"
-                },
                 "notes": {
                   "column": "notes"
                 },
@@ -3388,6 +3401,9 @@
                 },
                 "routeRateId": {
                   "column": "route_rate_id"
+                },
+                "routeTypeId": {
+                  "column": "route_type_id"
                 },
                 "updatedAt": {
                   "column": "updated_at"
@@ -3487,21 +3503,6 @@
                   "model": "RouteTypes",
                   "namespace": "public"
                 }
-              },
-              "routes": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "routeRateId"
-                  ]
-                },
-                "to": {
-                  "model": "Routes",
-                  "namespace": "public"
-                }
               }
             },
             "storage": {
@@ -3588,6 +3589,21 @@
               }
             },
             "relations": {
+              "routeCompanies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "routeTypeId"
+                  ]
+                },
+                "to": {
+                  "model": "RouteCompanies",
+                  "namespace": "public"
+                }
+              },
               "routeRates": {
                 "cardinality": "1:N",
                 "on": {
@@ -3600,21 +3616,6 @@
                 },
                 "to": {
                   "model": "RouteRates",
-                  "namespace": "public"
-                }
-              },
-              "routes": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "routeTypeId"
-                  ]
-                },
-                "to": {
-                  "model": "Routes",
                   "namespace": "public"
                 }
               }
@@ -3671,7 +3672,7 @@
                 }
               },
               "kilometers": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/numeric@1",
                   "kind": "scalar"
@@ -3684,38 +3685,10 @@
                   "kind": "scalar"
                 }
               },
-              "packagesUndelivered": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "routeCode": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "routeDate": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/date-string@1",
-                  "kind": "scalar"
-                }
-              },
-              "routeRateId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/uuid@1",
-                  "kind": "scalar"
-                }
-              },
-              "routeTypeId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/uuid@1",
                   "kind": "scalar"
                 }
               },
@@ -3734,7 +3707,7 @@
                 }
               },
               "vehicleKmEnd": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/numeric@1",
                   "kind": "scalar"
@@ -3761,38 +3734,6 @@
                 },
                 "to": {
                   "model": "RouteCompanies",
-                  "namespace": "public"
-                }
-              },
-              "routeRate": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "routeRateId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "RouteRates",
-                  "namespace": "public"
-                }
-              },
-              "routeType": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "routeTypeId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "RouteTypes",
                   "namespace": "public"
                 }
               },
@@ -3830,20 +3771,8 @@
                 "notes": {
                   "column": "notes"
                 },
-                "packagesUndelivered": {
-                  "column": "packages_undelivered"
-                },
-                "routeCode": {
-                  "column": "route_code"
-                },
                 "routeDate": {
                   "column": "route_date"
-                },
-                "routeRateId": {
-                  "column": "route_rate_id"
-                },
-                "routeTypeId": {
-                  "column": "route_type_id"
                 },
                 "updatedAt": {
                   "column": "updated_at"
@@ -7240,10 +7169,6 @@
                   "name": "route_companies_billing_amount_check"
                 },
                 {
-                  "expression": "((kilometers IS NULL) OR (kilometers >= (0)::numeric))",
-                  "name": "route_companies_kilometers_check"
-                },
-                {
                   "expression": "(packages_received >= 0)",
                   "name": "route_companies_packages_received_check"
                 },
@@ -7295,11 +7220,6 @@
                   },
                   "nullable": false
                 },
-                "kilometers": {
-                  "codecId": "pg/numeric@1",
-                  "dataType": "pg/numeric",
-                  "nullable": true
-                },
                 "notes": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -7312,7 +7232,7 @@
                     "kind": "literal",
                     "value": 0
                   },
-                  "nullable": false
+                  "nullable": true
                 },
                 "packages_undelivered": {
                   "codecId": "pg/int4@1",
@@ -7321,7 +7241,7 @@
                     "kind": "literal",
                     "value": 0
                   },
-                  "nullable": false
+                  "nullable": true
                 },
                 "rate_amount": {
                   "codecId": "pg/numeric@1",
@@ -7339,6 +7259,11 @@
                   "nullable": true
                 },
                 "route_rate_id": {
+                  "codecId": "pg/uuid@1",
+                  "dataType": "pg/uuid",
+                  "nullable": true
+                },
+                "route_type_id": {
                   "codecId": "pg/uuid@1",
                   "dataType": "pg/uuid",
                   "nullable": true
@@ -7420,6 +7345,25 @@
                     ],
                     "namespaceId": "public",
                     "tableName": "route_rates"
+                  }
+                },
+                {
+                  "name": "route_companies_route_type_id_fkey",
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "route_type_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_companies"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "route_types"
                   }
                 }
               ],
@@ -7607,10 +7551,6 @@
                   "name": "routes_kilometers_check"
                 },
                 {
-                  "expression": "(packages_undelivered >= 0)",
-                  "name": "routes_packages_undelivered_check"
-                },
-                {
                   "expression": "(vehicle_km_end >= (0)::numeric)",
                   "name": "routes_vehicle_km_end_check"
                 },
@@ -7646,41 +7586,21 @@
                 "kilometers": {
                   "codecId": "pg/numeric@1",
                   "dataType": "pg/numeric",
-                  "nullable": false
+                  "default": {
+                    "kind": "literal",
+                    "value": "0"
+                  },
+                  "nullable": true
                 },
                 "notes": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
                 },
-                "packages_undelivered": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "default": {
-                    "kind": "literal",
-                    "value": 0
-                  },
-                  "nullable": false
-                },
-                "route_code": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": false
-                },
                 "route_date": {
                   "codecId": "pg/date-string@1",
                   "dataType": "pg/date",
                   "nullable": false
-                },
-                "route_rate_id": {
-                  "codecId": "pg/uuid@1",
-                  "dataType": "pg/uuid",
-                  "nullable": true
-                },
-                "route_type_id": {
-                  "codecId": "pg/uuid@1",
-                  "dataType": "pg/uuid",
-                  "nullable": true
                 },
                 "updated_at": {
                   "codecId": "pg/timestamptz-string@1",
@@ -7699,7 +7619,7 @@
                 "vehicle_km_end": {
                   "codecId": "pg/numeric@1",
                   "dataType": "pg/numeric",
-                  "nullable": false
+                  "nullable": true
                 },
                 "vehicle_km_start": {
                   "codecId": "pg/numeric@1",
@@ -7708,40 +7628,6 @@
                 }
               },
               "foreignKeys": [
-                {
-                  "name": "fk_routes_route_rate",
-                  "source": {
-                    "columns": [
-                      "route_rate_id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "routes"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "route_rates"
-                  }
-                },
-                {
-                  "name": "fk_routes_route_type",
-                  "source": {
-                    "columns": [
-                      "route_type_id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "routes"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "route_types"
-                  }
-                },
                 {
                   "name": "fk_routes_user",
                   "source": {
@@ -8418,7 +8304,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "a276286dd254c4b1f569f308178074dd37fd979f88b818104759d055b727046f"
+    "storageHash": "8e7653ddf1d8a1c0c8ff9110f2219ef21b2982c89acd163638c63d335496c166"
   },
   "capabilities": {
     "postgres": {

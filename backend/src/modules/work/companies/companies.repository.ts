@@ -2,9 +2,10 @@
         Consulta y modifica la base de datos mediante Prisma.
 */
 
+import { log } from "console";
 import { db } from "../../../prisma/db.js";
-import { Temporal } from '@js-temporal/polyfill';
 import { Company, CreateCompanyInput } from "./companies.types.js";
+import { and } from "@prisma/orm-postgres/orm-client";
 
 const getAllCompanies = async () => {
   return await db.orm.public.Companies
@@ -17,6 +18,12 @@ const getAllCompanies = async () => {
     )
     .all();
 
+}
+
+const getCompany = (companyId: string) => {
+  return db.orm.public.Companies.select('routingType')
+  .where((company) =>and(company.id.eq(companyId), company.active.eq(true)))
+  .first()
 }
 
 const createCompany = async (companyData: CreateCompanyInput) => {
@@ -48,4 +55,4 @@ const createCompanyBillingContact = async (company: Company, body: CreateCompany
 	return newBillingContact;
 }
 
-export default { getAllCompanies, createCompany, createCompanyBillingContact, getPackageRates }
+export default { getAllCompanies, createCompany, createCompanyBillingContact, getPackageRates, getCompany }

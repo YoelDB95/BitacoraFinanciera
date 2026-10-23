@@ -332,15 +332,15 @@ namespace public {
   }
 
   model RouteTypes {
-    id         Uuid              @id(map: "route_types_pkey") @default(sql`gen_random_uuid()`)
-    code       VarChar           @unique(map: "route_types_code_key")
-    createdAt  TimestamptzString @default(now()) @map("created_at")
-    isActive   Boolean           @default(true) @map("is_active")
-    isSpecial  Boolean           @default(false) @map("is_special")
-    name       VarChar
-    updatedAt  TimestamptzString @default(now()) @map("updated_at")
-    routeRates RouteRates[]
-    routes     Routes[]
+    id             Uuid              @id(map: "route_types_pkey") @default(sql`gen_random_uuid()`)
+    code           VarChar           @unique(map: "route_types_code_key")
+    createdAt      TimestamptzString @default(now()) @map("created_at")
+    isActive       Boolean           @default(true) @map("is_active")
+    isSpecial      Boolean           @default(false) @map("is_special")
+    name           VarChar
+    updatedAt      TimestamptzString @default(now()) @map("updated_at")
+    routeCompanies RouteCompanies[]
+    routeRates     RouteRates[]
 
     @@rls
     @@map("route_types")
@@ -356,7 +356,6 @@ namespace public {
     validFrom      DateString        @map("valid_from")
     validTo        DateString?       @map("valid_to")
     routeCompanies RouteCompanies[]
-    routes         Routes[]
     routeType      RouteTypes?       @relation(fields: [routeTypeId], references: [id], map: "fk_route_rates_route_type", index: false)
 
     @@check(expression: "(amount >= (0)::numeric)", map: "route_rates_amount_check")
@@ -365,28 +364,21 @@ namespace public {
   }
 
   model Routes {
-    id                  Uuid              @id(map: "routes_pkey") @default(sql`gen_random_uuid()`)
-    createdAt           TimestamptzString @default(now()) @map("created_at")
-    destinationCity     String            @map("destination_city")
-    kilometers          Numeric
-    notes               String?
-    packagesUndelivered Int               @default(0) @map("packages_undelivered")
-    routeCode           String            @map("route_code")
-    routeDate           DateString        @map("route_date")
-    routeRateId         Uuid?             @map("route_rate_id")
-    routeTypeId         Uuid?             @map("route_type_id")
-    updatedAt           TimestamptzString @default(now()) @map("updated_at")
-    userId              Uuid?             @map("user_id")
-    vehicleKmEnd        Numeric           @map("vehicle_km_end")
-    vehicleKmStart      Numeric           @map("vehicle_km_start")
-    routeCompanies      RouteCompanies[]
-    routeRate           RouteRates?       @relation(fields: [routeRateId], references: [id], map: "fk_routes_route_rate", index: false)
-    routeType           RouteTypes?       @relation(fields: [routeTypeId], references: [id], map: "fk_routes_route_type", index: false)
-    user                Users?            @relation(fields: [userId], references: [id], map: "fk_routes_user", index: false)
+    id              Uuid              @id(map: "routes_pkey") @default(sql`gen_random_uuid()`)
+    createdAt       TimestamptzString @default(now()) @map("created_at")
+    destinationCity String            @map("destination_city")
+    kilometers      Numeric?          @default(0)
+    notes           String?
+    routeDate       DateString        @map("route_date")
+    updatedAt       TimestamptzString @default(now()) @map("updated_at")
+    userId          Uuid?             @map("user_id")
+    vehicleKmEnd    Numeric?          @map("vehicle_km_end")
+    vehicleKmStart  Numeric           @map("vehicle_km_start")
+    routeCompanies  RouteCompanies[]
+    user            Users?            @relation(fields: [userId], references: [id], map: "fk_routes_user", index: false)
 
     @@check(expression: "(vehicle_km_end >= vehicle_km_start)", map: "check_route_kilometers")
     @@check(expression: "(kilometers >= (0)::numeric)", map: "routes_kilometers_check")
-    @@check(expression: "(packages_undelivered >= 0)", map: "routes_packages_undelivered_check")
     @@check(expression: "(vehicle_km_end >= (0)::numeric)", map: "routes_vehicle_km_end_check")
     @@check(expression: "(vehicle_km_start >= (0)::numeric)", map: "routes_vehicle_km_start_check")
     @@rls
@@ -400,23 +392,23 @@ namespace public {
     companyRateAmount     Numeric?                @map("company_rate_amount")
     companyRateId         Uuid?                   @map("company_rate_id")
     createdAt             TimestamptzString       @default(now()) @map("created_at")
-    kilometers            Numeric?
     notes                 String?
-    packagesReceived      Int                     @default(0) @map("packages_received")
-    packagesUndelivered   Int                     @default(0) @map("packages_undelivered")
+    packagesReceived      Int?                    @default(0) @map("packages_received")
+    packagesUndelivered   Int?                    @default(0) @map("packages_undelivered")
     rateAmount            Numeric?                @map("rate_amount")
     routeId               Uuid                    @map("route_id")
     routeRateAmount       Numeric?                @map("route_rate_amount")
     routeRateId           Uuid?                   @map("route_rate_id")
     updatedAt             TimestamptzString       @default(now()) @map("updated_at")
+    routeTypeId           Uuid?                   @map("route_type_id")
     invoiceRouteCompanies InvoiceRouteCompanies[]
     company               Companies               @relation(fields: [companyId], references: [id], map: "fk_route_companies_company", index: false)
     companyRate           CompanyRates?           @relation(fields: [companyRateId], references: [id], map: "fk_route_companies_company_rate", index: false)
     route                 Routes                  @relation(fields: [routeId], references: [id], map: "fk_route_companies_route", index: false)
     routeRate             RouteRates?             @relation(fields: [routeRateId], references: [id], map: "fk_route_companies_route_rate", index: false)
+    routeType             RouteTypes?             @relation(fields: [routeTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "route_companies_route_type_id_fkey", index: false)
 
     @@check(expression: "((billing_amount IS NULL) OR (billing_amount >= (0)::numeric))", map: "route_companies_billing_amount_check")
-    @@check(expression: "((kilometers IS NULL) OR (kilometers >= (0)::numeric))", map: "route_companies_kilometers_check")
     @@check(expression: "(packages_received >= 0)", map: "route_companies_packages_received_check")
     @@check(expression: "(packages_undelivered >= 0)", map: "route_companies_packages_undelivered_check")
     @@check(expression: "((rate_amount IS NULL) OR (rate_amount >= (0)::numeric))", map: "route_companies_rate_amount_check")

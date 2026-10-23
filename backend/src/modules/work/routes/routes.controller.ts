@@ -20,8 +20,6 @@ const getRoutes = async (req: Request, res: Response): Promise<Response> => {
 
 const createRoute = async (req: Request, res: Response): Promise<Response> => {
     try {
-        console.log('llegue');
-        
         const route = req.body
         const response = routesService.createRoute(route)
         return res.status(201).json(response)

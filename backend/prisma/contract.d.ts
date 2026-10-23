@@ -18,7 +18,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'a276286dd254c4b1f569f308178074dd37fd979f88b818104759d055b727046f'>;
+  StorageHashBase<'8e7653ddf1d8a1c0c8ff9110f2219ef21b2982c89acd163638c63d335496c166'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -468,14 +468,14 @@ export type FieldOutputTypes = {
       readonly companyRateId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
-      readonly packagesReceived: CodecTypes['pg/int4@1']['output'];
-      readonly packagesUndelivered: CodecTypes['pg/int4@1']['output'];
+      readonly packagesReceived: CodecTypes['pg/int4@1']['output'] | null;
+      readonly packagesUndelivered: CodecTypes['pg/int4@1']['output'] | null;
       readonly rateAmount: CodecTypes['pg/numeric@1']['output'] | null;
       readonly routeId: CodecTypes['pg/uuid@1']['output'];
       readonly routeRateAmount: CodecTypes['pg/numeric@1']['output'] | null;
       readonly routeRateId: CodecTypes['pg/uuid@1']['output'] | null;
+      readonly routeTypeId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
     readonly RouteRates: {
@@ -492,16 +492,12 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly destinationCity: CodecTypes['pg/text@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['output'];
+      readonly kilometers: CodecTypes['pg/numeric@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
-      readonly packagesUndelivered: CodecTypes['pg/int4@1']['output'];
-      readonly routeCode: CodecTypes['pg/text@1']['output'];
       readonly routeDate: CodecTypes['pg/date-string@1']['output'];
-      readonly routeRateId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly routeTypeId: CodecTypes['pg/uuid@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly userId: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly vehicleKmEnd: CodecTypes['pg/numeric@1']['output'];
+      readonly vehicleKmEnd: CodecTypes['pg/numeric@1']['output'] | null;
       readonly vehicleKmStart: CodecTypes['pg/numeric@1']['output'];
     };
     readonly RouteTypes: {
@@ -802,14 +798,14 @@ export type FieldInputTypes = {
       readonly companyRateId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
-      readonly packagesReceived: CodecTypes['pg/int4@1']['input'];
-      readonly packagesUndelivered: CodecTypes['pg/int4@1']['input'];
+      readonly packagesReceived: CodecTypes['pg/int4@1']['input'] | null;
+      readonly packagesUndelivered: CodecTypes['pg/int4@1']['input'] | null;
       readonly rateAmount: CodecTypes['pg/numeric@1']['input'] | null;
       readonly routeId: CodecTypes['pg/uuid@1']['input'];
       readonly routeRateAmount: CodecTypes['pg/numeric@1']['input'] | null;
       readonly routeRateId: CodecTypes['pg/uuid@1']['input'] | null;
+      readonly routeTypeId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly RouteRates: {
@@ -826,16 +822,12 @@ export type FieldInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly destinationCity: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['input'];
+      readonly kilometers: CodecTypes['pg/numeric@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
-      readonly packagesUndelivered: CodecTypes['pg/int4@1']['input'];
-      readonly routeCode: CodecTypes['pg/text@1']['input'];
       readonly routeDate: CodecTypes['pg/date-string@1']['input'];
-      readonly routeRateId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly routeTypeId: CodecTypes['pg/uuid@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly userId: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly vehicleKmEnd: CodecTypes['pg/numeric@1']['input'];
+      readonly vehicleKmEnd: CodecTypes['pg/numeric@1']['input'] | null;
       readonly vehicleKmStart: CodecTypes['pg/numeric@1']['input'];
     };
     readonly RouteTypes: {
@@ -1136,14 +1128,14 @@ export type StorageColumnTypes = {
       readonly company_rate_id: CodecTypes['pg/uuid@1']['output'] | null;
       readonly created_at: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
-      readonly packages_received: CodecTypes['pg/int4@1']['output'];
-      readonly packages_undelivered: CodecTypes['pg/int4@1']['output'];
+      readonly packages_received: CodecTypes['pg/int4@1']['output'] | null;
+      readonly packages_undelivered: CodecTypes['pg/int4@1']['output'] | null;
       readonly rate_amount: CodecTypes['pg/numeric@1']['output'] | null;
       readonly route_id: CodecTypes['pg/uuid@1']['output'];
       readonly route_rate_amount: CodecTypes['pg/numeric@1']['output'] | null;
       readonly route_rate_id: CodecTypes['pg/uuid@1']['output'] | null;
+      readonly route_type_id: CodecTypes['pg/uuid@1']['output'] | null;
       readonly updated_at: CodecTypes['pg/timestamptz-string@1']['output'];
     };
     readonly route_rates: {
@@ -1169,16 +1161,12 @@ export type StorageColumnTypes = {
       readonly created_at: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly destination_city: CodecTypes['pg/text@1']['output'];
       readonly id: CodecTypes['pg/uuid@1']['output'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['output'];
+      readonly kilometers: CodecTypes['pg/numeric@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
-      readonly packages_undelivered: CodecTypes['pg/int4@1']['output'];
-      readonly route_code: CodecTypes['pg/text@1']['output'];
       readonly route_date: CodecTypes['pg/date-string@1']['output'];
-      readonly route_rate_id: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly route_type_id: CodecTypes['pg/uuid@1']['output'] | null;
       readonly updated_at: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly user_id: CodecTypes['pg/uuid@1']['output'] | null;
-      readonly vehicle_km_end: CodecTypes['pg/numeric@1']['output'];
+      readonly vehicle_km_end: CodecTypes['pg/numeric@1']['output'] | null;
       readonly vehicle_km_start: CodecTypes['pg/numeric@1']['output'];
     };
     readonly sync_logs: {
@@ -1470,14 +1458,14 @@ export type StorageColumnInputTypes = {
       readonly company_rate_id: CodecTypes['pg/uuid@1']['input'] | null;
       readonly created_at: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
-      readonly packages_received: CodecTypes['pg/int4@1']['input'];
-      readonly packages_undelivered: CodecTypes['pg/int4@1']['input'];
+      readonly packages_received: CodecTypes['pg/int4@1']['input'] | null;
+      readonly packages_undelivered: CodecTypes['pg/int4@1']['input'] | null;
       readonly rate_amount: CodecTypes['pg/numeric@1']['input'] | null;
       readonly route_id: CodecTypes['pg/uuid@1']['input'];
       readonly route_rate_amount: CodecTypes['pg/numeric@1']['input'] | null;
       readonly route_rate_id: CodecTypes['pg/uuid@1']['input'] | null;
+      readonly route_type_id: CodecTypes['pg/uuid@1']['input'] | null;
       readonly updated_at: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly route_rates: {
@@ -1503,16 +1491,12 @@ export type StorageColumnInputTypes = {
       readonly created_at: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly destination_city: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/uuid@1']['input'];
-      readonly kilometers: CodecTypes['pg/numeric@1']['input'];
+      readonly kilometers: CodecTypes['pg/numeric@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
-      readonly packages_undelivered: CodecTypes['pg/int4@1']['input'];
-      readonly route_code: CodecTypes['pg/text@1']['input'];
       readonly route_date: CodecTypes['pg/date-string@1']['input'];
-      readonly route_rate_id: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly route_type_id: CodecTypes['pg/uuid@1']['input'] | null;
       readonly updated_at: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly user_id: CodecTypes['pg/uuid@1']['input'] | null;
-      readonly vehicle_km_end: CodecTypes['pg/numeric@1']['input'];
+      readonly vehicle_km_end: CodecTypes['pg/numeric@1']['input'] | null;
       readonly vehicle_km_start: CodecTypes['pg/numeric@1']['input'];
     };
     readonly sync_logs: {
@@ -1892,22 +1876,23 @@ export namespace Models {
     companyRateId: CodecTypes['pg/uuid@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     id: CodecTypes['pg/uuid@1']['output'];
-    kilometers: CodecTypes['pg/numeric@1']['output'] | null;
     notes: CodecTypes['pg/text@1']['output'] | null;
-    packagesReceived: CodecTypes['pg/int4@1']['output'];
-    packagesUndelivered: CodecTypes['pg/int4@1']['output'];
+    packagesReceived: CodecTypes['pg/int4@1']['output'] | null;
+    packagesUndelivered: CodecTypes['pg/int4@1']['output'] | null;
     rateAmount: CodecTypes['pg/numeric@1']['output'] | null;
     routeId: CodecTypes['pg/uuid@1']['output'];
     routeRateAmount: CodecTypes['pg/numeric@1']['output'] | null;
     routeRateId: CodecTypes['pg/uuid@1']['output'] | null;
+    routeTypeId: CodecTypes['pg/uuid@1']['output'] | null;
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     company: public_Companies;
     companyRate: public_CompanyRates | null;
     invoiceRouteCompanies: public_InvoiceRouteCompanies[];
     route: public_Routes;
     routeRate: public_RouteRates | null;
+    routeType: public_RouteTypes | null;
     readonly [RelationKeys]?:
-      'company' | 'companyRate' | 'invoiceRouteCompanies' | 'route' | 'routeRate';
+      'company' | 'companyRate' | 'invoiceRouteCompanies' | 'route' | 'routeRate' | 'routeType';
   };
   export type public_RouteRates = {
     amount: CodecTypes['pg/numeric@1']['output'];
@@ -1920,8 +1905,7 @@ export namespace Models {
     validTo: CodecTypes['pg/date-string@1']['output'] | null;
     routeCompanies: public_RouteCompanies[];
     routeType: public_RouteTypes | null;
-    routes: public_Routes[];
-    readonly [RelationKeys]?: 'routeCompanies' | 'routeType' | 'routes';
+    readonly [RelationKeys]?: 'routeCompanies' | 'routeType';
   };
   export type public_RouteTypes = {
     code: CodecTypes['sql/varchar@1']['output'];
@@ -1931,30 +1915,24 @@ export namespace Models {
     isSpecial: CodecTypes['pg/bool@1']['output'];
     name: CodecTypes['sql/varchar@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    routeCompanies: public_RouteCompanies[];
     routeRates: public_RouteRates[];
-    routes: public_Routes[];
-    readonly [RelationKeys]?: 'routeRates' | 'routes';
+    readonly [RelationKeys]?: 'routeCompanies' | 'routeRates';
   };
   export type public_Routes = {
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     destinationCity: CodecTypes['pg/text@1']['output'];
     id: CodecTypes['pg/uuid@1']['output'];
-    kilometers: CodecTypes['pg/numeric@1']['output'];
+    kilometers: CodecTypes['pg/numeric@1']['output'] | null;
     notes: CodecTypes['pg/text@1']['output'] | null;
-    packagesUndelivered: CodecTypes['pg/int4@1']['output'];
-    routeCode: CodecTypes['pg/text@1']['output'];
     routeDate: CodecTypes['pg/date-string@1']['output'];
-    routeRateId: CodecTypes['pg/uuid@1']['output'] | null;
-    routeTypeId: CodecTypes['pg/uuid@1']['output'] | null;
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     userId: CodecTypes['pg/uuid@1']['output'] | null;
-    vehicleKmEnd: CodecTypes['pg/numeric@1']['output'];
+    vehicleKmEnd: CodecTypes['pg/numeric@1']['output'] | null;
     vehicleKmStart: CodecTypes['pg/numeric@1']['output'];
     routeCompanies: public_RouteCompanies[];
-    routeRate: public_RouteRates | null;
-    routeType: public_RouteTypes | null;
     user: public_Users | null;
-    readonly [RelationKeys]?: 'routeCompanies' | 'routeRate' | 'routeType' | 'user';
+    readonly [RelationKeys]?: 'routeCompanies' | 'user';
   };
   export type public_SyncLogs = {
     details: CodecTypes['pg/jsonb@1']['output'] | null;
@@ -4056,12 +4034,6 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
-                readonly kilometers: {
-                  readonly dataType: 'pg/numeric';
-                  readonly codecId: 'pg/numeric@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
                 readonly notes: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -4071,7 +4043,7 @@ type ContractBase = Omit<
                 readonly packages_received: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly default: {
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
@@ -4081,7 +4053,7 @@ type ContractBase = Omit<
                 readonly packages_undelivered: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly default: {
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
@@ -4107,6 +4079,12 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly route_rate_id: {
+                  readonly dataType: 'pg/uuid';
+                  readonly codecId: 'pg/uuid@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly route_type_id: {
                   readonly dataType: 'pg/uuid';
                   readonly codecId: 'pg/uuid@1';
                   readonly nullable: true;
@@ -4178,6 +4156,19 @@ type ContractBase = Omit<
                     readonly columns: readonly ['id'];
                   };
                   readonly name: 'fk_route_companies_route_rate';
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'route_companies';
+                    readonly columns: readonly ['route_type_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'route_types';
+                    readonly columns: readonly ['id'];
+                  };
+                  readonly name: 'route_companies_route_type_id_fkey';
                 },
               ];
             };
@@ -4351,7 +4342,11 @@ type ContractBase = Omit<
                 readonly kilometers: {
                   readonly dataType: 'pg/numeric';
                   readonly codecId: 'pg/numeric@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0'>;
+                  };
                   readonly many: false;
                 };
                 readonly notes: {
@@ -4360,38 +4355,10 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
-                readonly packages_undelivered: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
-                  };
-                  readonly many: false;
-                };
-                readonly route_code: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
                 readonly route_date: {
                   readonly dataType: 'pg/date';
                   readonly codecId: 'pg/date-string@1';
                   readonly nullable: false;
-                  readonly many: false;
-                };
-                readonly route_rate_id: {
-                  readonly dataType: 'pg/uuid';
-                  readonly codecId: 'pg/uuid@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
-                readonly route_type_id: {
-                  readonly dataType: 'pg/uuid';
-                  readonly codecId: 'pg/uuid@1';
-                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly updated_at: {
@@ -4410,7 +4377,7 @@ type ContractBase = Omit<
                 readonly vehicle_km_end: {
                   readonly dataType: 'pg/numeric';
                   readonly codecId: 'pg/numeric@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly vehicle_km_start: {
@@ -4424,32 +4391,6 @@ type ContractBase = Omit<
               uniques: readonly [];
               indexes: readonly [];
               foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'routes';
-                    readonly columns: readonly ['route_rate_id'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'route_rates';
-                    readonly columns: readonly ['id'];
-                  };
-                  readonly name: 'fk_routes_route_rate';
-                },
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'routes';
-                    readonly columns: readonly ['route_type_id'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'route_types';
-                    readonly columns: readonly ['id'];
-                  };
-                  readonly name: 'fk_routes_route_type';
-                },
                 {
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
@@ -7119,20 +7060,16 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
-              readonly kilometers: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/numeric@1' };
-              };
               readonly notes: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly packagesReceived: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly packagesUndelivered: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly rateAmount: {
@@ -7148,6 +7085,10 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/numeric@1' };
               };
               readonly routeRateId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly routeTypeId: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
@@ -7219,6 +7160,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly routeType: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'RouteTypes';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['routeTypeId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'route_companies';
@@ -7230,7 +7183,6 @@ type ContractBase = Omit<
                 readonly companyRateId: { readonly column: 'company_rate_id' };
                 readonly createdAt: { readonly column: 'created_at' };
                 readonly id: { readonly column: 'id' };
-                readonly kilometers: { readonly column: 'kilometers' };
                 readonly notes: { readonly column: 'notes' };
                 readonly packagesReceived: { readonly column: 'packages_received' };
                 readonly packagesUndelivered: { readonly column: 'packages_undelivered' };
@@ -7238,6 +7190,7 @@ type ContractBase = Omit<
                 readonly routeId: { readonly column: 'route_id' };
                 readonly routeRateAmount: { readonly column: 'route_rate_amount' };
                 readonly routeRateId: { readonly column: 'route_rate_id' };
+                readonly routeTypeId: { readonly column: 'route_type_id' };
                 readonly updatedAt: { readonly column: 'updated_at' };
               };
             };
@@ -7307,17 +7260,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
-              readonly routes: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Routes';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['routeRateId'];
-                };
-              };
             };
             readonly storage: {
               readonly table: 'route_rates';
@@ -7352,32 +7294,16 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
               readonly kilometers: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/numeric@1' };
               };
               readonly notes: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly packagesUndelivered: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly routeCode: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
               readonly routeDate: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/date-string@1' };
-              };
-              readonly routeRateId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
-              };
-              readonly routeTypeId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
               readonly updatedAt: {
                 readonly nullable: false;
@@ -7391,7 +7317,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
               };
               readonly vehicleKmEnd: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/numeric@1' };
               };
               readonly vehicleKmStart: {
@@ -7409,30 +7335,6 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['routeId'];
-                };
-              };
-              readonly routeRate: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'RouteRates';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['routeRateId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-              readonly routeType: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'RouteTypes';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['routeTypeId'];
-                  readonly targetFields: readonly ['id'];
                 };
               };
               readonly user: {
@@ -7457,11 +7359,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly kilometers: { readonly column: 'kilometers' };
                 readonly notes: { readonly column: 'notes' };
-                readonly packagesUndelivered: { readonly column: 'packages_undelivered' };
-                readonly routeCode: { readonly column: 'route_code' };
                 readonly routeDate: { readonly column: 'route_date' };
-                readonly routeRateId: { readonly column: 'route_rate_id' };
-                readonly routeTypeId: { readonly column: 'route_type_id' };
                 readonly updatedAt: { readonly column: 'updated_at' };
                 readonly userId: { readonly column: 'user_id' };
                 readonly vehicleKmEnd: { readonly column: 'vehicle_km_end' };
@@ -7507,10 +7405,10 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
-              readonly routeRates: {
+              readonly routeCompanies: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'RouteRates';
+                  readonly model: 'RouteCompanies';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -7518,10 +7416,10 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['routeTypeId'];
                 };
               };
-              readonly routes: {
+              readonly routeRates: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Routes';
+                  readonly model: 'RouteRates';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
