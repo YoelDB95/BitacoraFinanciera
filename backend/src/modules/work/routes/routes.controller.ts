@@ -21,7 +21,7 @@ const getRoutes = async (req: Request, res: Response): Promise<Response> => {
 const createRoute = async (req: Request, res: Response): Promise<Response> => {
     try {
         const route = req.body
-        const response = routesService.createRoute(route)
+        const response = await routesService.createRoute(route)
         return res.status(201).json(response)
     } catch(e) {
         console.error(e)

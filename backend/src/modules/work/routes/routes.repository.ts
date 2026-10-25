@@ -3,15 +3,10 @@
 */
 
 import { db } from "../../../prisma/db.js";
-import { Route } from "./routes.types.js";
+import { CompanyRouteWithoutRouteID, Route } from "./routes.types.js";
 
 const getRouteRates = async () => {
-  /*
-   * SELECT *
-FROM public.v_route_types_with_rates
-ORDER BY name;
-   */
-const runtime = db.runtime();
+  const runtime = db.runtime();
   const plan = db.raw.sql`
     SELECT
       route_type_id,
@@ -32,50 +27,49 @@ const runtime = db.runtime();
     .build();
 
   return await runtime.query(plan);
-	// const runtime = db.runtime();
-
-  // const plan = db.sql.public.route_types
-  //   .innerJoin(
-  //     db.sql.public.route_rates,
-  //     (f, fns) =>
-  //       fns.eq(
-  //         f.route_types.id,
-  //         f.route_rates.route_type_id,
-  //       ),
-  //   )
-  //   .select((f) => ({
-  //     route_type_id: f.route_types.id,
-  //     name: f.route_types.name,
-  //     amount: f.route_rates.amount,
-  //     valid_from: f.route_rates.valid_from,
-  //     rate_created_at: f.route_rates.created_at,
-  //   }))
-  //   .where((f, fns) =>
-  //     fns.and(
-  //       fns.eq(f.route_types.is_active, true),
-  //       fns.raw`${f.route_rates.valid_from} <= CURRENT_DATE`
-  //         .returns("pg/bool@1"),
-  //     ),
-  //   )
-  //   .orderBy("code", { direction: "asc" })
-  //   .orderBy("valid_from", { direction: "desc" })
-  //   .orderBy("rate_created_at", { direction: "desc" })
-  //   .distinctOn("code")
-  //   .build();
-
-  // return await runtime.query(plan);
 }
 
 const getRoutes = () => {
- return db.orm.public.Routes
+ return db.orm.public.Routes.select('kilometers')
   .include('routeCompanies', (routeCompanies) =>
-    routeCompanies.select('id', 'companyId', 'routeId', 'billingAmount', 'rateAmount', 'kilometers', 'packagesReceived', 'packagesUndelivered')
+    routeCompanies.select('id', 'companyId', 'routeId', 'billingAmount', 'rateAmount', 'packagesReceived', 'packagesUndelivered')
   )
   .all()
 }
 
-const createRoute = (route:Route) => {
-//todo
+const createRouteWithCompanies = async (route: Route, companyRoute:CompanyRouteWithoutRouteID[]) => {
+  return db.transaction(async (tx) => {
+    const newRoute = await tx.orm.public.Routes.create({
+      destinationCity: route.destinationCity,
+      notes: route.notes ?? null,
+      routeDate: route.routeDate,
+      userId: route.userId ?? null,
+      vehicleKmEnd: route.vehicleKmEnd == null ? null : String(route.vehicleKmEnd),
+      vehicleKmStart: String(route.vehicleKmStart),
+    })
+
+    const associations = []
+    for (const company of companyRoute) {
+      associations.push(
+        await tx.orm.public.RouteCompanies.create({
+          billingAmount: company.billingAmount == null ? null : String(company.billingAmount),
+	        companyId: company.companyId,
+	        companyRateAmount: company.companyRateAmount == null ? null : String(company.companyRateAmount),
+	        companyRateId: company.companyRateId ?? null,
+	        notes: company.notes ?? null,
+	        packagesReceived: company.packagesReceived ?? null,
+	        packagesUndelivered: company.packagesUndelivered ?? null,
+	        rateAmount: company.rateAmount == null ? null : String(company.rateAmount),
+	        routeId: newRoute.id,
+	        routeRateAmount: company.routeRateAmount == null ? null : String(company.routeRateAmount),
+	        routeRateId: company.routeRateId ?? null,
+	        routeTypeId: company.routeTypeId ?? null
+        })
+      )
+    }
+
+    return { newRoute, associations }
+  })
 }
 
 const getTypeRoute = (nameCode: string) => {
@@ -90,4 +84,4 @@ const getTypeRoute = (nameCode: string) => {
   .first()
 }
 
-export default { getRouteRates, getRoutes, createRoute, getTypeRoute }
+export default { getRouteRates, getRoutes, getTypeRoute, createRouteWithCompanies }

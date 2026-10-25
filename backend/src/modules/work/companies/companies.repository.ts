@@ -39,7 +39,7 @@ const createCompany = async (companyData: CreateCompanyInput) => {
 	return newCompany
 }
 
-const getPackageRates = async () => db.orm.public.CompanyRates .select('amount', 'name', 'unit').all()
+const getPackageRates = async () => db.orm.public.CompanyRates.select('id', 'amount', 'name', 'unit').include('company', company => company.select('id')).orderBy((p) => p.validFrom.desc()).first()
 
 const createCompanyBillingContact = async (company: Company, body: CreateCompanyInput) => {
 	const newBillingContact = await db.orm.public.CompanyBillingContacts.create({
