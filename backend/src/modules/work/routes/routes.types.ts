@@ -1,8 +1,8 @@
 export interface ServiceRoute
   extends Route,
     Omit<CompanyRoute, 'companyId' | 'routeId'> {
+  	companies: {
 			routingType: 'ROUTE' | 'PACKAGE',
-  		companies: {
 			companyId: string,
 			packagesReceived?: number | null,
 			packagesUndelivered?: number | null,
@@ -10,6 +10,26 @@ export interface ServiceRoute
 			companyRateId?: string | null
 		}[]
 }
+
+export type CreateRouteInput = {
+  routeDate: string;
+  destinationCity: string;
+  vehicleKmStart: number;
+  vehicleKmEnd?: number | null;
+  notes?: string | null;
+  companies: Array<{
+    companyId: string;
+    routingType: 'ROUTE' | 'PACKAGE';
+    packagesReceived: number;
+    packagesUndelivered: number;
+    rateAmount: number;
+    routeRateId?: string;      // requerido si routingType es ROUTE
+    routeTypeId?: string;      // requerido si routingType es ROUTE
+    routeRateAmount?: number;  // requerido si routingType es ROUTE
+    companyRateId?: string;   // requerido si routingType es PACKAGE
+    packageAmount?: number;   // requerido si routingType es PACKAGE
+  }>;
+};
 
 export interface Route {
 	destinationCity: string,
