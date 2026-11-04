@@ -1,35 +1,70 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
+import ErrorNotice from '../components/ui/ErrorNotice.jsx'
+import ErrorState from '../components/ui/ErrorState.jsx'
 import RouteList from '../components/routes/RouteList.jsx'
 import RouteModal from '../components/work/RouteModal.jsx'
-import { useRoutes } from '../hooks/useRoutes.js'
 import { useCompanies } from '../hooks/useCompanies.js'
-import { createRoute } from '../lib/api.js'
-import { COMPANY_INDEX } from '../lib/work.js'
+import { createRoute, getRoutesMonth } from '../lib/api.js'
 import { formatCount, formatDate } from '../lib/format.js'
+import { companyLabel, routeEntryLabel } from '../lib/routeDisplay.js'
 
 const EMPTY_FILTERS = { date: '', companyId: '' }
-
-function companyLabel(company) {
-  return company?.nombre ?? company?.legalName ?? company?.name ?? 'Empresa'
-}
 
 export default function Rutas() {
   const [draft, setDraft] = useState(EMPTY_FILTERS)
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [modalOpen, setModalOpen] = useState(false)
-  const [error, setError] = useState('')
-  const { routes, addRoute, removeRoute } = useRoutes()
+  const [error, setError] = useState(null)
+  const [routes, setRoutes] = useState([])
+  const [routesStatus, setRoutesStatus] = useState('loading')
   const { companies } = useCompanies()
 
+  const loadRoutes = useCallback(async () => {
+    setRoutesStatus('loading')
+    try {
+      setRoutes(await getRoutesMonth())
+      setRoutesStatus('ready')
+      setError(null)
+      return true
+    } catch (err) {
+      setRoutesStatus('error')
+      setError(err)
+      return false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    getRoutesMonth()
+      .then((loadedRoutes) => {
+        if (!active) return
+        setRoutes(loadedRoutes)
+        setRoutesStatus('ready')
+        setError(null)
+      })
+      .catch((err) => {
+        if (!active) return
+        setRoutesStatus('error')
+        setError(err)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
   const companyIndex = useMemo(() => {
-    const index = { ...COMPANY_INDEX }
+    const index = {}
     for (const company of companies) {
-      index[company.id] = {
+      const normalized = {
         id: company.id,
         nombre: companyLabel(company),
       }
+      index[company.id] = normalized
+      index[companyLabel(company)] = normalized
     }
     return index
   }, [companies])
@@ -51,14 +86,17 @@ export default function Rutas() {
     }
     for (const route of routes) {
       for (const entry of route.empresas ?? []) {
-        if (!map.has(entry.companyId) && companyIndex[entry.companyId]) {
-          map.set(entry.companyId, companyLabel(companyIndex[entry.companyId]))
+        if (map.has(entry.companyId)) continue
+        const label = routeEntryLabel(entry, companyIndex)
+        if (label !== 'Empresa') {
+          map.set(entry.companyId, label)
         }
       }
     }
-    return [{ value: '', label: 'Todas las empresas' }, ...[...map].map(
-      ([value, label]) => ({ value, label }),
-    )]
+    return [
+      { value: '', label: 'Todas las empresas' },
+      ...[...map].map(([value, label]) => ({ value, label })),
+    ]
   }, [companies, routes, companyIndex])
 
   const visible = useMemo(() => {
@@ -68,7 +106,9 @@ export default function Rutas() {
         if (
           filters.companyId &&
           !(route.empresas ?? []).some(
-            (entry) => entry.companyId === filters.companyId,
+            (entry) =>
+              entry.companyId === filters.companyId ||
+              entry.companyName === companyLabel(companyIndex[filters.companyId]),
           )
         ) {
           return false
@@ -76,7 +116,7 @@ export default function Rutas() {
         return true
       })
       .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0))
-  }, [routes, filters])
+  }, [routes, filters, companyIndex])
 
   const hasFilters = filters.date !== '' || filters.companyId !== ''
   const hasDraft = draft.date !== '' || draft.companyId !== ''
@@ -92,25 +132,15 @@ export default function Rutas() {
   }
 
   const handleNewRoute = async (route) => {
-    try {
-      await createRoute(route)
-      addRoute({
-        ...route,
-        empresas: (route.empresas ?? []).map((entry, index) => ({
-          key: `r-${Date.now()}-${index}`,
-          ...entry,
-        })),
-      })
-      setError('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar la ruta.')
-    }
+    await createRoute(route)
+    await loadRoutes()
   }
 
   const summary = [
-    filters.date ? formatDate(filters.date) : 'Todas las fechas',
+    filters.date ? formatDate(filters.date) : 'Este mes',
     filters.companyId
-      ? companyLabel(companyIndex[filters.companyId])
+      ? (companyOptions.find((option) => option.value === filters.companyId)
+          ?.label ?? companyLabel(companyIndex[filters.companyId]))
       : 'Todas las empresas',
   ].join(' · ')
 
@@ -121,9 +151,9 @@ export default function Rutas() {
           <p className="page-head__eyebrow">Bitácora</p>
           <h1 className="page-head__title">Rutas</h1>
           <p className="page-head__desc">
-            {routes.length === 0
-              ? 'Todavía no hay rutas registradas.'
-              : `${routes.length} rutas registradas. Filtra por fecha y empresa para revisar sus entregas.`}
+            {routesStatus === 'loading'
+              ? 'Cargando las rutas del mes…'
+              : `${routes.length} registros de ruta este mes. Filtra por fecha y empresa para revisar sus entregas.`}
           </p>
         </div>
         <button
@@ -136,11 +166,13 @@ export default function Rutas() {
         </button>
       </div>
 
-      {error && (
-        <div className="notice">
-          <Icon name="alert" size={14} />
-          <span>{error}</span>
-        </div>
+      {error && (routesStatus !== 'error' || routes.length > 0) && (
+        <ErrorNotice
+          error={error}
+          title="No se pudieron actualizar las rutas"
+          onRetry={loadRoutes}
+          onDismiss={() => setError(null)}
+        />
       )}
 
       <form className="card filter-panel" onSubmit={handleSearch}>
@@ -218,16 +250,25 @@ export default function Rutas() {
         </span>
       </div>
 
-      {visible.length > 0 ? (
+      {routesStatus === 'loading' && routes.length === 0 ? (
+        <p className="card card__subtitle" role="status">
+          Cargando rutas del mes…
+        </p>
+      ) : routesStatus === 'error' && routes.length === 0 ? (
+        <ErrorState
+          error={error}
+          title="No se pudieron cargar las rutas del mes"
+          onRetry={loadRoutes}
+        />
+      ) : visible.length > 0 ? (
         <RouteList
           routes={visible}
           companyIndex={companyIndex}
-          onDelete={removeRoute}
         />
       ) : (
         <EmptyState
           icon={hasFilters ? 'search' : 'route'}
-          title={hasFilters ? 'Sin resultados' : 'Aún no hay rutas'}
+          title={hasFilters ? 'Sin resultados' : 'Aún no hay rutas este mes'}
           text={
             hasFilters
               ? 'No hay rutas que coincidan con la fecha y la empresa seleccionadas.'

@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   formatCurrency,
-  formatCompact,
   formatDate,
-  formatKm,
-  formatCount,
   toInputDate,
   parseAmount,
 } from './format.js'

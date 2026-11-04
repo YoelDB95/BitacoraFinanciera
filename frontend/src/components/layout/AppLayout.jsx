@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Icon from '../ui/Icon.jsx'
+import ErrorCenter from '../ui/ErrorCenter.jsx'
+import ErrorBoundary from '../ui/ErrorBoundary.jsx'
 import { NAV_ITEMS } from '../../lib/constants.js'
 import { useTransactions } from '../../hooks/useTransactions.js'
 import { formatCompact } from '../../lib/format.js'
@@ -128,6 +130,8 @@ const isMatch = (item) =>
           <span className="topbar__title">{current.label}</span>
           <span className="topbar__spacer" />
 
+          <ErrorCenter />
+
           <button type="button" className="icon-button" aria-label="Notificaciones">
             <Icon name="chart" size={18} />
           </button>
@@ -137,7 +141,13 @@ const isMatch = (item) =>
         </header>
 
         <main className="content">
-          <Outlet />
+          <ErrorBoundary
+            key={pathname}
+            variant="inline"
+            title="No se pudo mostrar esta página"
+          >
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

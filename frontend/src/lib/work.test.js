@@ -6,8 +6,6 @@ import {
   COMPANIES,
   COMPANY_INDEX,
   ENVIO_FACTURACION_OPTIONS,
-  generateTripId,
-  normalizeRoute,
 } from './work.js'
 
 describe('work helpers', () => {

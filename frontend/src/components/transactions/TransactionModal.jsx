@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
+import FormErrors from '../ui/FormErrors.jsx'
 import { useTransactions } from '../../hooks/useTransactions.js'
 import { CATEGORIES, PAYMENT_METHODS } from '../../lib/constants.js'
 import { formatCurrency, parseAmount, toInputDate } from '../../lib/format.js'
@@ -70,6 +71,11 @@ function TransactionForm({ id, onDone }) {
 
   return (
     <form id={id} onSubmit={handleSubmit} noValidate>
+      <FormErrors
+        errors={errors}
+        title="No se pudo guardar la transacción"
+        description="Corregí los campos marcados para continuar."
+      />
       <div className="modal__preview">
         <span className="modal__preview-label">Balance del movimiento</span>
         <span className={`modal__preview-value modal__preview-value--${form.type}`}>

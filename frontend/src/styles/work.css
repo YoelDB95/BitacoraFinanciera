@@ -133,6 +133,21 @@
   height: 40px;
 }
 
+.route-company__rate {
+  margin-top: 10px;
+}
+
+.route-form__rate-value {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.route-form__notice {
+  margin-bottom: 16px;
+}
+
 .route-company__remove {
   display: grid;
   place-items: center;

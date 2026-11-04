@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
+import ErrorNotice from '../components/ui/ErrorNotice.jsx'
+import ErrorState from '../components/ui/ErrorState.jsx'
 import CompanyCard from '../components/work/CompanyCard.jsx'
 import CompanyModal from '../components/work/CompanyModal.jsx'
 import CompanyDetailModal from '../components/work/CompanyDetailModal.jsx'
@@ -20,24 +22,23 @@ async function fetchCompanies() {
 export default function Empresa() {
   const [companies, setCompanies] = useState([])
   const [status, setStatus] = useState('loading')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
   const load = useCallback(async (selectId) => {
+    setStatus('loading')
     try {
       const list = await fetchCompanies()
       setCompanies(list)
-      setError('')
+      setError(null)
       setStatus('ready')
       if (selectId) {
         setSelectedCompany(list.find((item) => item.id === selectId) ?? null)
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'No se pudieron cargar las empresas.',
-      )
+      setError(err)
       setStatus('error')
     }
   }, [])
@@ -48,14 +49,12 @@ export default function Empresa() {
       .then((result) => {
         if (cancelled) return
         setCompanies(result)
-        setError('')
+        setError(null)
         setStatus('ready')
       })
       .catch((err) => {
         if (cancelled) return
-        setError(
-          err instanceof Error ? err.message : 'No se pudieron cargar las empresas.',
-        )
+        setError(err)
         setStatus('error')
       })
     return () => {
@@ -65,15 +64,9 @@ export default function Empresa() {
 
   const handleCreate = useCallback(
     async (values) => {
-      try {
-        await createCompany(values)
-        setModalOpen(false)
-        await load()
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'No se pudo crear la empresa.',
-        )
-      }
+      await createCompany(values)
+      setModalOpen(false)
+      await load()
     },
     [load],
   )
@@ -178,7 +171,7 @@ export default function Empresa() {
           </span>
         </div>
 
-        {status === 'loading' ? (
+        {status === 'loading' && companyCount === 0 ? (
           <div className="card">
             <div className="empty">
               <span className="empty__art">
@@ -188,28 +181,20 @@ export default function Empresa() {
             </div>
           </div>
         ) : status === 'error' && companyCount === 0 ? (
-          <EmptyState
-            icon="alert"
+          <ErrorState
+            error={error}
             title="No se pudieron cargar las empresas"
-            text={error}
-            action={
-              <button
-                type="button"
-                className="button button--primary"
-                onClick={() => load()}
-              >
-                <Icon name="close" size={16} />
-                Reintentar
-              </button>
-            }
+            onRetry={() => load()}
           />
         ) : (
           <>
             {error && (
-              <div className="notice">
-                <Icon name="alert" size={14} />
-                <span>{error}</span>
-              </div>
+              <ErrorNotice
+                error={error}
+                title="No se pudieron actualizar las empresas"
+                onRetry={() => load()}
+                onDismiss={() => setError(null)}
+              />
             )}
             {body}
           </>

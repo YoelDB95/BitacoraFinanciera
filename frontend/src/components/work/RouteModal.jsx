@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
-import { ROUTE_OPTIONS } from '../../lib/work.js'
-import { toInputDate } from '../../lib/format.js'
+import ErrorNotice from '../ui/ErrorNotice.jsx'
+import FormErrors from '../ui/FormErrors.jsx'
+import { formatCurrency, toInputDate } from '../../lib/format.js'
+import { getRates } from '../../lib/api.js'
 
 export default function RouteModal({ open, onClose, onCreate, companies = [] }) {
   return (
@@ -21,9 +23,14 @@ export default function RouteModal({ open, onClose, onCreate, companies = [] }) 
 }
 
 function RouteForm({ onDone, onCreate, companies = [] }) {
+  const [rates, setRates] = useState({ ROUTE: [], PACKAGE: [] })
+  const [ratesStatus, setRatesStatus] = useState('loading')
+  const [ratesError, setRatesError] = useState(null)
+  const [ratesReload, setRatesReload] = useState(0)
+  const [submitError, setSubmitError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({
     fecha: toInputDate(),
-    routeCode: '',
     city: '',
     kmInicial: '',
     kmFinal: '',
@@ -33,6 +40,42 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
     { key: 1, companyId: '', paquetes: '' },
   ])
   const [errors, setErrors] = useState({})
+
+  // Vuelve a pedir las tarifas y muestra el estado de carga.
+  const retryRates = () => {
+    setRatesStatus('loading')
+    setRatesError(null)
+    setRatesReload((value) => value + 1)
+  }
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRates() {
+      try {
+        const [routeRates, packageRates] = await Promise.all([
+          getRates('ROUTE'),
+          getRates('PACKAGE'),
+        ])
+        if (!active) return
+        setRates({
+          ROUTE: routeRates.rates,
+          PACKAGE: packageRates.rates,
+        })
+        setRatesStatus('ready')
+      } catch (error) {
+        if (!active) return
+        setRatesStatus('error')
+        setRatesError(error)
+      }
+    }
+
+    loadRates()
+
+    return () => {
+      active = false
+    }
+  }, [ratesReload])
 
   const kmCalculado = Math.max(
     0,
@@ -55,10 +98,21 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
         !usedCompanyIds.includes(company.id),
     )
 
+  const getPackageRate = (companyId) =>
+    rates.PACKAGE
+      .filter((rate) => rate.companyId === companyId)
+      .sort((a, b) => String(b.validFrom ?? '').localeCompare(String(a.validFrom ?? '')))[0]
+
   const updateEmpresa = (rowIndex, field, value) => {
     setEmpresas((current) =>
       current.map((entry, index) =>
-        index === rowIndex ? { ...entry, [field]: value } : entry,
+        index === rowIndex
+          ? {
+              ...entry,
+              [field]: value,
+              ...(field === 'companyId' ? { routeRateId: '' } : {}),
+            }
+          : entry,
       ),
     )
   }
@@ -77,45 +131,112 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
     ])
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     const nextErrors = {}
     if (!form.fecha) nextErrors.fecha = 'Selecciona una fecha.'
     if (!form.city) nextErrors.city = 'Elige la ciudad.'
-    if (Number(form.kmInicial) < 0)
-      nextErrors.kmInicial = 'El km inicial no puede ser negativo.'
-    if (form.kmFinal && Number(form.kmFinal) <= Number(form.kmInicial))
-      nextErrors.kmFinal = 'El km final debe ser mayor al km inicial.'
+    const vehicleKmStart = Number(form.kmInicial)
+    const vehicleKmEnd = form.kmFinal === '' ? null : Number(form.kmFinal)
+    if (form.kmInicial === '' || !Number.isFinite(vehicleKmStart) || vehicleKmStart < 0)
+      nextErrors.kmInicial = 'Ingresa un km inicial válido y no negativo.'
+    if (
+      vehicleKmEnd != null &&
+      (!Number.isFinite(vehicleKmEnd) || vehicleKmEnd < vehicleKmStart)
+    )
+      nextErrors.kmFinal = 'El km final debe ser válido y no menor al km inicial.'
+
+    const selectedCompanies = empresas.filter((entry) => entry.companyId)
+    if (selectedCompanies.length === 0)
+      nextErrors.companies = 'Selecciona al menos una empresa.'
+
+    const companyRates = selectedCompanies.map((entry) => {
+      const company = companies.find((item) => item.id === entry.companyId)
+      const routingType = company?.routingType
+      const packagesReceived = Number(entry.paquetes)
+      const common = {
+        companyId: entry.companyId,
+        routingType,
+        packagesReceived: Number.isFinite(packagesReceived) && packagesReceived >= 0
+          ? packagesReceived
+          : 0,
+        packagesUndelivered: 0,
+      }
+
+      if (routingType === 'ROUTE') {
+        const rate = rates.ROUTE.find((item) => item.id === entry.routeRateId)
+        return {
+          ...common,
+          rateAmount: rate?.amount ?? null,
+          routeRateAmount: rate?.amount ?? null,
+          routeRateId: rate?.id ?? null,
+          routeTypeId: rate?.routeTypeId ?? null,
+        }
+      }
+
+      if (routingType === 'PACKAGE') {
+        const rate = getPackageRate(entry.companyId)
+        return {
+          ...common,
+          rateAmount: rate?.amount ?? null,
+          packageAmount: rate?.amount ?? null,
+          companyRateId: rate?.id ?? null,
+        }
+      }
+
+      nextErrors[`rate-${entry.key}`] =
+        'La empresa no tiene un tipo de tarifa válido.'
+      return common
+    })
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
     }
 
-    onCreate({
-      fecha: form.fecha,
-      routeCode: form.routeCode,
-      city: form.city,
-      kmInicial: Number(form.kmInicial) || 0,
-      kmFinal: Number(form.kmFinal) || 0,
-      kmCalculado: kmCalculado,
-      observaciones: form.observaciones.trim(),
-      empresas: empresas
-        .filter((entry) => entry.companyId)
-        .map((entry) => ({
-          companyId: entry.companyId,
-          paquetes: Number(entry.paquetes) || 0,
-          routingType:
-            companies.find((company) => company.id === entry.companyId)
-              ?.routingType ?? '',
-        })),
-    })
-    onDone()
+    setSubmitError(null)
+    setSubmitting(true)
+
+    try {
+      await onCreate({
+        routeDate: form.fecha,
+        destinationCity: form.city,
+        vehicleKmStart,
+        vehicleKmEnd,
+        notes: form.observaciones.trim() || null,
+        companies: companyRates,
+      })
+      onDone()
+    } catch (err) {
+      setSubmitError(err)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <form id="route-form" onSubmit={handleSubmit} noValidate>
+      <FormErrors
+        errors={errors}
+        title="No se pudo guardar la ruta"
+        description="Corregí los campos marcados para continuar."
+      />
+      {submitError && (
+        <ErrorNotice
+          error={submitError}
+          title="No se pudo guardar la ruta"
+          onDismiss={() => setSubmitError(null)}
+        />
+      )}
+      {ratesError && (
+        <ErrorNotice
+          error={ratesError}
+          title="No se pudieron cargar las tarifas"
+          compact
+          onRetry={retryRates}
+        />
+      )}
       <div className="modal__grid" style={{ marginBottom: 16 }}>
         <div className="field">
           <label className="field__label" htmlFor="route-date">
@@ -135,25 +256,6 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
               {errors.fecha}
             </span>
           )}
-        </div>
-
-        <div className="field">
-          <label className="field__label" htmlFor="route-code">
-            Identificación de la ruta
-          </label>
-          <select
-            id="route-code"
-            className="select"
-            value={form.routeCode}
-            onChange={(event) => update('routeCode', event.target.value)}
-          >
-            <option value="">Seleccionar…</option>
-            {ROUTE_OPTIONS.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -291,9 +393,55 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
                   <Icon name="trash" size={15} />
                 </button>
               </div>
+              {entry.companyId && (
+                <div className="field route-company__rate">
+                  <label
+                    className="field__label"
+                    htmlFor={`route-rate-${entry.key}`}
+                  >
+                    {companies.find((company) => company.id === entry.companyId)
+                      ?.routingType === 'ROUTE'
+                      ? 'Tarifa de ruta'
+                      : 'Tarifa de paquete'}
+                  </label>
+                  {companies.find((company) => company.id === entry.companyId)
+                    ?.routingType === 'ROUTE' ? (
+                    <select
+                      id={`route-rate-${entry.key}`}
+                      className="select"
+                      value={entry.routeRateId ?? ''}
+                      onChange={(event) =>
+                        updateEmpresa(index, 'routeRateId', event.target.value)
+                      }
+                      disabled={ratesStatus !== 'ready'}
+                    >
+                      <option value="">Sin tarifa (opcional)</option>
+                      {rates.ROUTE.map((rate) => (
+                        <option key={rate.id} value={rate.id}>
+                          {rate.name} — {formatCurrency(rate.amount)}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="route-form__rate-value">
+                      {ratesStatus === 'ready' && getPackageRate(entry.companyId)
+                        ? formatCurrency(getPackageRate(entry.companyId).amount)
+                        : ratesStatus === 'loading'
+                          ? 'Cargando tarifa…'
+                          : 'Sin tarifa vigente'}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ))}
 
+          {errors.companies && (
+            <span className="field__error">
+              <Icon name="alert" size={13} />
+              {errors.companies}
+            </span>
+          )}
           {usedCompanyIds.length < companies.length && (
             <button
               type="button"
@@ -325,9 +473,14 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
         <button type="button" className="button button--ghost" onClick={onDone}>
           Cancelar
         </button>
-        <button type="submit" form="route-form" className="button button--primary">
+        <button
+          type="submit"
+          form="route-form"
+          className="button button--primary"
+          disabled={submitting}
+        >
           <Icon name="check" size={16} />
-          Guardar ruta
+          {submitting ? 'Guardando…' : 'Guardar ruta'}
         </button>
       </div>
     </form>

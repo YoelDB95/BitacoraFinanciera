@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
+import FormErrors from '../ui/FormErrors.jsx'
 import { toInputDate } from '../../lib/format.js'
 
 function nextInvoiceNumber(count) {
@@ -75,6 +76,11 @@ function InvoiceForm({ onDone, onCreate, invoiceCount, companies = [] }) {
 
   return (
     <form id="invoice-form" onSubmit={handleSubmit} noValidate>
+      <FormErrors
+        errors={errors}
+        title="No se pudo emitir la factura"
+        description="Corregí los campos marcados para continuar."
+      />
       <div className="modal__grid" style={{ marginBottom: 16 }}>
         <div className="field">
           <label className="field__label" htmlFor="invoice-company">

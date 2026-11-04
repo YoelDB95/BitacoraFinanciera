@@ -1,37 +1,166 @@
+import {
+  ApiError,
+  isAbortError,
+  statusMessage,
+} from './errors.js'
 import { ENVIO_FACTURACION_LABELS } from './work.js'
 
 const API_BASE = (import.meta.env?.VITE_API_URL ?? '/api').replace(/\/+$/, '')
 
+const GENERIC_MESSAGES = new Set(['error', 'failed', 'fail', 'unknown error'])
+
+async function readResponseBody(response) {
+  if (typeof response.text === 'function') {
+    try {
+      const text = await response.text()
+      if (!text) return { data: null, raw: '' }
+      try {
+        return { data: JSON.parse(text), raw: text }
+      } catch {
+        return { data: null, raw: text }
+      }
+    } catch {
+      return { data: null, raw: '' }
+    }
+  }
+
+  if (typeof response.json === 'function') {
+    try {
+      return { data: await response.json(), raw: '' }
+    } catch {
+      return { data: null, raw: '' }
+    }
+  }
+
+  return { data: null, raw: '' }
+}
+
+function readErrorMessage(body, status, raw = '') {
+  const fallback = statusMessage(status)
+
+  if (typeof body === 'string') {
+    return GENERIC_MESSAGES.has(body.trim().toLowerCase()) ? fallback : body
+  }
+
+  if (!body || typeof body !== 'object') {
+    const text = String(raw ?? '').trim()
+    if (
+      text &&
+      text.length <= 500 &&
+      !GENERIC_MESSAGES.has(text.toLowerCase()) &&
+      !/^[<[{]/.test(text)
+    ) {
+      return text
+    }
+    return fallback
+  }
+
+  const candidates = [
+    body.error,
+    body.message,
+    body.error?.message,
+    body.detail,
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return GENERIC_MESSAGES.has(candidate.trim().toLowerCase())
+        ? fallback
+        : candidate.trim()
+    }
+  }
+
+  if (Array.isArray(body.errors) && body.errors.length > 0) {
+    const first = body.errors[0]
+    if (typeof first === 'string' && first.trim()) return first.trim()
+    if (typeof first?.message === 'string' && first.message.trim()) {
+      return first.message.trim()
+    }
+  }
+
+  return fallback
+}
+
+function readErrorCode(body) {
+  if (!body || typeof body !== 'object') return ''
+  return body.code ?? body.errorCode ?? body.error_code ?? ''
+}
+
+function readErrorDetails(body) {
+  if (!body || typeof body !== 'object') return null
+  return body.details ?? body.errors ?? null
+}
+
+function readRequestId(response) {
+  return (
+    response.headers?.get?.('x-request-id') ??
+    response.headers?.get?.('x-correlation-id') ??
+    ''
+  )
+}
+
+function makeEndpoint(path) {
+  return `${API_BASE}${path}`
+}
+
 async function send(path = '', options = {}) {
+  const endpoint = makeEndpoint(path)
+  const method = String(options.method ?? 'GET').toUpperCase()
   let response
 
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(endpoint, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     })
-  } catch {
-    throw new Error('No se pudo conectar con el servidor.')
-  }
-
-  if (!response.ok) {
-    let message = `Error ${response.status}`
-    try {
-      const body = await response.json()
-      if (body?.error) message = body.error
-    } catch {
-      // respuesta sin JSON: se conserva el mensaje genérico
+  } catch (cause) {
+    if (isAbortError(cause)) {
+      throw new ApiError('La solicitud fue cancelada o tardó demasiado.', {
+        source: 'network',
+        kind: 'timeout',
+        code: 'REQUEST_TIMEOUT',
+        endpoint,
+        method,
+        retryable: true,
+        cause,
+      })
     }
-    throw new Error(message)
+
+    throw new ApiError('No se pudo conectar con el servidor.', {
+      source: 'network',
+      kind: 'network',
+      code: 'NETWORK_ERROR',
+      endpoint,
+      method,
+      retryable: true,
+      cause,
+    })
   }
 
   if (response.status === 204) return null
 
-  try {
-    return await response.json()
-  } catch {
-    return null
+  const { data, raw } = await readResponseBody(response)
+
+  if (!response.ok) {
+    throw new ApiError(readErrorMessage(data, response.status, raw), {
+      kind: 'server',
+      source: 'backend',
+      status: response.status,
+      statusText: response.statusText ?? '',
+      code: readErrorCode(data),
+      details: readErrorDetails(data),
+      payload: data ?? (raw ? { raw } : null),
+      endpoint,
+      method,
+      requestId: readRequestId(response),
+      retryable:
+        response.status === 408 ||
+        response.status === 429 ||
+        response.status >= 500,
+    })
   }
+
+  return data
 }
 
 function request(path = '', options = {}) {
@@ -47,7 +176,7 @@ function normalizeRate(rate = {}, routingType = '') {
     name: rate.name ?? '',
     unit: rate.unit ?? '',
     notes: rate.notes ?? '',
-    companyId: rate.company_id ?? rate.companyId ?? '',
+    companyId: rate.company_id ?? rate.companyId ?? rate.company?.id ?? '',
     amount: Number(rate.amount ?? 0),
     validFrom: rate.valid_from ?? rate.validFrom ?? null,
     validTo: rate.valid_to ?? rate.validTo ?? null,
@@ -191,11 +320,12 @@ export async function getRates(routingType) {
   const fallback = routingType ?? 'ROUTE'
   const data = await request(`/rate/${encodeURIComponent(fallback)}`)
   const resultType = data?.routingType ?? fallback
-  const list = Array.isArray(data?.companyRate)
-    ? data.companyRate
-    : Array.isArray(data)
-      ? data
-      : (data?.data ?? [])
+  const rawRates = data?.companyRate ?? data?.data ?? data
+  const list = Array.isArray(rawRates)
+    ? rawRates
+    : rawRates && typeof rawRates === 'object'
+      ? [rawRates]
+      : []
   return {
     routingType: resultType,
     rates: (Array.isArray(list) ? list : []).map((rate) =>
@@ -208,11 +338,13 @@ export function toRoutePayload(route = {}) {
   const notes = String(route.notes ?? route.observaciones ?? '').trim()
 
   return {
-    routeCode: String(route.routeCode ?? '').trim(),
     routeDate: route.routeDate ?? route.fecha ?? '',
     destinationCity: String(route.destinationCity ?? route.city ?? '').trim(),
     vehicleKmStart: Number(route.vehicleKmStart ?? route.kmInicial ?? 0) || 0,
-    vehicleKmEnd: Number(route.vehicleKmEnd ?? route.kmFinal ?? 0) || 0,
+    vehicleKmEnd:
+      route.vehicleKmEnd == null && route.kmFinal == null
+        ? null
+        : Number(route.vehicleKmEnd ?? route.kmFinal),
     notes: notes || null,
     companies: (route.companies ?? route.empresas ?? []).map((entry) => ({
       companyId: entry.companyId ?? '',
@@ -220,6 +352,24 @@ export function toRoutePayload(route = {}) {
       packagesUndelivered:
         Number(entry.packagesUndelivered ?? entry.noEntregados ?? 0) || 0,
       routingType: entry.routingType ?? null,
+      rateAmount:
+        entry.rateAmount == null ? null : Number(entry.rateAmount),
+      ...(entry.routingType === 'ROUTE'
+        ? {
+            routeRateAmount:
+              entry.routeRateAmount == null
+                ? null
+                : Number(entry.routeRateAmount),
+            routeRateId: entry.routeRateId ?? null,
+            routeTypeId: entry.routeTypeId ?? null,
+          }
+        : {
+            packageAmount:
+              entry.packageAmount == null
+                ? null
+                : Number(entry.packageAmount),
+            companyRateId: entry.companyRateId ?? null,
+          }),
     })),
   }
 }
@@ -228,5 +378,49 @@ export async function createRoute(route) {
   return send('/routes', {
     method: 'POST',
     body: JSON.stringify(toRoutePayload(route)),
+  })
+}
+
+export async function getRoutesMonth() {
+  const data = await send('/routes/month')
+  const routes = Array.isArray(data) ? data : (data?.data ?? [])
+
+  return (Array.isArray(routes) ? routes : []).map((route) => {
+    const id = route.route_company_id ?? route.routeCompanyId ?? route.id
+    const companyName =
+      route.legal_name ?? route.legalName ?? route.companyName ?? route.name ?? ''
+
+    return {
+      id,
+      routeCode: route.route_code ?? route.routeCode ?? 'Ruta',
+      fecha: route.route_date ?? route.routeDate ?? '',
+      city: route.destination_city ?? route.destinationCity ?? '',
+      kmInicial: Number(route.vehicle_km_start ?? route.vehicleKmStart ?? 0),
+      kmFinal: Number(
+        route.coalesce ?? route.vehicle_km_end ?? route.vehicleKmEnd ?? 0,
+      ),
+      rateAmount:
+        route.rate_amount == null && route.rateAmount == null
+          ? null
+          : Number(route.rate_amount ?? route.rateAmount),
+      empresas: [
+        {
+          key: id,
+          companyId:
+            route.company_id ?? route.companyId ?? companyName,
+          companyName,
+          routingType:
+            route.company_routing_type ?? route.companyRoutingType ?? '',
+          routeTypeCode: route.route_type_code ?? route.routeTypeCode ?? '',
+          routeTypeName: route.route_type_name ?? route.routeTypeName ?? '',
+          paquetes: Number(
+            route.packages_received ?? route.packagesReceived ?? 0,
+          ),
+          noEntregados: Number(
+            route.packages_undelivered ?? route.packagesUndelivered ?? 0,
+          ),
+        },
+      ],
+    }
   })
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
+import ErrorNotice from '../ui/ErrorNotice.jsx'
 import { formatCurrency } from '../../lib/format.js'
 import { getRates } from '../../lib/api.js'
 
@@ -90,10 +91,11 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
   const [rateKind, setRateKind] = useState(company.routingType || 'ROUTE')
   const [rateInputs, setRateInputs] = useState({})
   const [ratesStatus, setRatesStatus] = useState('loading')
-  const [ratesError, setRatesError] = useState('')
+  const [ratesError, setRatesError] = useState(null)
   const [savingRateId, setSavingRateId] = useState('')
   const [savingInfo, setSavingInfo] = useState(false)
-  const [error, setError] = useState('')
+  const [infoError, setInfoError] = useState(null)
+  const [rateError, setRateError] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -107,15 +109,12 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
         setRateKind(routingType)
         setRates(list)
         setRateInputs(rateInputsFrom(list))
+        setRatesError(null)
         setRatesStatus('ready')
       })
       .catch((err) => {
         if (!active) return
-        setRatesError(
-          err instanceof Error
-            ? err.message
-            : 'No se pudieron cargar las tarifas.',
-        )
+        setRatesError(err)
         setRatesStatus('error')
       })
     return () => {
@@ -126,7 +125,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
   const loadRates = useCallback(async (showLoading = false) => {
     if (showLoading) {
       setRatesStatus('loading')
-      setRatesError('')
+      setRatesError(null)
     }
     try {
       const result = await getRates(company.routingType || 'ROUTE')
@@ -137,30 +136,28 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
       setRateKind(routingType)
       setRates(list)
       setRateInputs(rateInputsFrom(list))
+      setRatesError(null)
       setRatesStatus('ready')
     } catch (err) {
-      setRatesError(
-        err instanceof Error ? err.message : 'No se pudieron cargar las tarifas.',
-      )
+      setRatesError(err)
       setRatesStatus('error')
     }
   }, [company.routingType])
 
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
-    setError('')
+    setInfoError(null)
+    setRateError(null)
   }
 
   const handleSubmitInfo = async (event) => {
     event.preventDefault()
     setSavingInfo(true)
-    setError('')
+    setInfoError(null)
     try {
       await onSaveInfo(company.id, form)
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'No se pudo guardar la empresa.',
-      )
+      setInfoError(err)
     } finally {
       setSavingInfo(false)
     }
@@ -171,11 +168,14 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
     const key = rateKey(rate)
     const amount = Number.parseFloat(rateInputs[key])
     if (!Number.isFinite(amount) || amount < 0) {
-      setError(`Ingresa una tarifa válida para ${rateName(rate)}.`)
+      setRateError({
+        message: `Ingresa una tarifa válida para ${rateName(rate)}.`,
+        title: 'Revisá la tarifa ingresada',
+      })
       return
     }
     setSavingRateId(key)
-    setError('')
+    setRateError(null)
     try {
       const routingType = company.routingType || 'ROUTE'
       const payload = rate.routeTypeId
@@ -184,9 +184,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
       await onSaveRate(routingType, payload)
       await loadRates()
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'No se pudo actualizar la tarifa.',
-      )
+      setRateError(err)
     } finally {
       setSavingRateId('')
     }
@@ -210,16 +208,12 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
         {ratesStatus === 'loading' ? (
           <p className="company-detail__rates-empty">Cargando tarifas…</p>
         ) : ratesStatus === 'error' ? (
-          <p className="company-detail__rates-empty company-detail__rates-error">
-            {ratesError}
-            <button
-              type="button"
-              className="company-detail__retry"
-              onClick={() => loadRates(true)}
-            >
-              Reintentar
-            </button>
-          </p>
+          <ErrorNotice
+            error={ratesError}
+            title="No se pudieron cargar las tarifas"
+            compact
+            onRetry={() => loadRates(true)}
+          />
         ) : rates.length === 0 ? (
           <p className="company-detail__rates-empty">
             No hay tarifas registradas todavía.
@@ -257,7 +251,7 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
                         ...current,
                         [key]: event.target.value,
                       }))
-                      setError('')
+                      setRateError(null)
                     }}
                     placeholder="0.00"
                     aria-label={`Nueva tarifa para ${rateName(rate)}`}
@@ -380,11 +374,20 @@ function CompanyDetailForm({ company, onClose, onSaveInfo, onSaveRate }) {
         </div>
       </form>
 
-      {error && (
-        <div className="notice">
-          <Icon name="alert" size={14} />
-          <span>{error}</span>
-        </div>
+      {infoError && (
+        <ErrorNotice
+          error={infoError}
+          title="No se pudo guardar la empresa"
+          onDismiss={() => setInfoError(null)}
+        />
+      )}
+
+      {rateError && (
+        <ErrorNotice
+          error={rateError}
+          title={rateError?.title ?? 'No se pudo actualizar la tarifa'}
+          onDismiss={() => setRateError(null)}
+        />
       )}
 
       <div className="modal__footer" style={{ margin: '4px -22px -22px' }}>

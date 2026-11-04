@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { TRANSACTION_TYPES, CATEGORIES, CATEGORY_INDEX, PAYMENT_METHODS, NAV_ITEMS } from './constants.js'
+import { TRANSACTION_TYPES, CATEGORY_INDEX, PAYMENT_METHODS, NAV_ITEMS } from './constants.js'
 
 describe('constants', () => {
   it('defines expected transaction types', () => {

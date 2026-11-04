@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal.jsx'
 import Icon from '../ui/Icon.jsx'
+import ErrorNotice from '../ui/ErrorNotice.jsx'
+import FormErrors from '../ui/FormErrors.jsx'
 import { ENVIO_FACTURACION_OPTIONS } from '../../lib/work.js'
 
 const RATE_TYPE_OPTIONS = ['ROUTE', 'PACKAGE']
@@ -21,6 +23,8 @@ function isValidEmail(raw) {
 }
 
 export default function CompanyModal({ open, onClose, onCreate }) {
+  const [saving, setSaving] = useState(false)
+
   return (
     <Modal
       open={open}
@@ -37,19 +41,26 @@ export default function CompanyModal({ open, onClose, onCreate }) {
             type="submit"
             form="company-form"
             className="button button--primary"
+            disabled={saving}
           >
             <Icon name="check" size={16} />
-            Guardar empresa
+            {saving ? 'Guardando…' : 'Guardar empresa'}
           </button>
         </>
       }
     >
-      {open && <CompanyForm onDone={onClose} onCreate={onCreate} />}
+      {open && (
+        <CompanyForm
+          onDone={onClose}
+          onCreate={onCreate}
+          onBusyChange={setSaving}
+        />
+      )}
     </Modal>
   )
 }
 
-function CompanyForm({ onDone, onCreate }) {
+function CompanyForm({ onDone, onCreate, onBusyChange }) {
   const [form, setForm] = useState({
     razonSocial: '',
     cuit: '',
@@ -60,13 +71,14 @@ function CompanyForm({ onDone, onCreate }) {
     routingType: '',
   })
   const [errors, setErrors] = useState({})
+  const [submitError, setSubmitError] = useState(null)
 
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     const nextErrors = {}
@@ -84,20 +96,41 @@ function CompanyForm({ onDone, onCreate }) {
       return
     }
 
-    onCreate({
-      nombre: form.razonSocial.trim(),
-      cuit: form.cuit,
-      direccionFacturacion: form.direccionFacturacion.trim(),
-      nota: form.nota.trim(),
-      correo: form.correo.trim(),
-      envioFacturacion: form.envioFacturacion,
-      routingType: form.routingType,
-    })
-    onDone()
+    setSubmitError(null)
+    onBusyChange?.(true)
+
+    try {
+      await onCreate({
+        nombre: form.razonSocial.trim(),
+        cuit: form.cuit,
+        direccionFacturacion: form.direccionFacturacion.trim(),
+        nota: form.nota.trim(),
+        correo: form.correo.trim(),
+        envioFacturacion: form.envioFacturacion,
+        routingType: form.routingType,
+      })
+      onDone()
+    } catch (err) {
+      setSubmitError(err)
+    } finally {
+      onBusyChange?.(false)
+    }
   }
 
   return (
     <form id="company-form" onSubmit={handleSubmit} noValidate>
+      <FormErrors
+        errors={errors}
+        title="No se pudo guardar la empresa"
+        description="Corregí los campos marcados para continuar."
+      />
+      {submitError && (
+        <ErrorNotice
+          error={submitError}
+          title="No se pudo crear la empresa"
+          onDismiss={() => setSubmitError(null)}
+        />
+      )}
       <div className="modal__grid" style={{ marginBottom: 16 }}>
         <div className="field">
           <label className="field__label" htmlFor="company-name">

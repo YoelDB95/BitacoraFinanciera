@@ -185,6 +185,59 @@ const ICONS = {
       <path d="M8.5 12.5h7M8.5 16h4.5" />
     </>
   ),
+  bug: (
+    <>
+      <rect x="7" y="6" width="10" height="13" rx="5" />
+      <path d="M9 6V4.5M15 6V4.5M3 10h4M17 10h4M3 15h4M17 15h4M5 7l2.5 2M19 7l-2.5 2M5 20l2.5-2.5M19 20l-2.5-2.5" />
+    </>
+  ),
+  server: (
+    <>
+      <rect x="3" y="4" width="18" height="7" rx="2" />
+      <rect x="3" y="13" width="18" height="7" rx="2" />
+      <path d="M7 7.5h.01M7 16.5h.01M11 7.5h5M11 16.5h5" />
+    </>
+  ),
+  monitor: (
+    <>
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8M12 16v4" />
+    </>
+  ),
+  wifiOff: (
+    <>
+      <path d="M3 3l18 18" />
+      <path d="M8.5 16.5a5 5 0 0 1 7 0" />
+      <path d="M5 12.5a10 10 0 0 1 3-2.1" />
+      <path d="M16 10.4a10 10 0 0 1 3 2.1" />
+      <path d="M2 8.5a15 15 0 0 1 4.2-2.7" />
+      <path d="M17.8 5.8A15 15 0 0 1 22 8.5" />
+      <path d="M12 20h.01" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 11a8 8 0 1 0-2.3 6.7" />
+      <path d="M20 4v7h-7" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </>
+  ),
+  terminal: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="m7 9 3 3-3 3M13 15h4" />
+    </>
+  ),
+  chevronDown: (
+    <>
+      <path d="m6 9 6 6 6-6" />
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 18, strokeWidth = 1.7, ...rest }) {

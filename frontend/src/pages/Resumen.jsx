@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
+import ErrorNotice from '../components/ui/ErrorNotice.jsx'
+import ErrorState from '../components/ui/ErrorState.jsx'
 import DateRangeSelector from '../components/work/DateRangeSelector.jsx'
 import CompanySummary from '../components/work/CompanySummary.jsx'
 import RoutesChart from '../components/work/RoutesChart.jsx'
@@ -14,7 +16,7 @@ import {
   summarizeByCompany,
   countRoutesByType,
 } from '../lib/work.js'
-import { getCompanies } from '../lib/api.js'
+import { createRoute, getCompanies } from '../lib/api.js'
 import { formatCount, formatCurrency, formatDate, formatKm } from '../lib/format.js'
 
 async function fetchCompanies() {
@@ -25,7 +27,7 @@ async function fetchCompanies() {
 export default function Work() {
   const [companies, setCompanies] = useState([])
   const [companiesStatus, setCompaniesStatus] = useState('loading')
-  const [companiesError, setCompaniesError] = useState('')
+  const [companiesError, setCompaniesError] = useState(null)
   const [range, setRange] = useState(() => ({
     ...resolvePreset('30'),
     preset: '30',
@@ -36,14 +38,13 @@ export default function Work() {
   const [invoiceModal, setInvoiceModal] = useState(false)
 
   const loadCompanies = useCallback(async () => {
+    setCompaniesStatus('loading')
     try {
       setCompanies(await fetchCompanies())
-      setCompaniesError('')
+      setCompaniesError(null)
       setCompaniesStatus('ready')
     } catch (err) {
-      setCompaniesError(
-        err instanceof Error ? err.message : 'No se pudieron cargar las empresas.',
-      )
+      setCompaniesError(err)
       setCompaniesStatus('error')
     }
   }, [])
@@ -54,14 +55,12 @@ export default function Work() {
       .then((result) => {
         if (cancelled) return
         setCompanies(result)
-        setCompaniesError('')
+        setCompaniesError(null)
         setCompaniesStatus('ready')
       })
       .catch((err) => {
         if (cancelled) return
-        setCompaniesError(
-          err instanceof Error ? err.message : 'No se pudieron cargar las empresas.',
-        )
+        setCompaniesError(err)
         setCompaniesStatus('error')
       })
     return () => {
@@ -90,11 +89,25 @@ export default function Work() {
     [periodRoutes],
   )
 
-  const handleNewRoute = (route) => {
+  const handleNewRoute = async (route) => {
+    await createRoute(route)
+
+    const id = `ruta-${Date.now()}`
     setRoutes((current) => [
       {
-        id: `ruta-${Date.now()}`,
-        ...route,
+        id,
+        fecha: route.routeDate,
+        routeCode: route.routeCode ?? 'Ruta',
+        city: route.destinationCity,
+        kmInicial: route.vehicleKmStart,
+        kmFinal: route.vehicleKmEnd ?? route.vehicleKmStart,
+        observaciones: route.notes ?? '',
+        empresas: (route.companies ?? []).map((entry, index) => ({
+          key: `${id}-${index}`,
+          companyId: entry.companyId,
+          paquetes: entry.packagesReceived,
+          noEntregados: entry.packagesUndelivered,
+        })),
       },
       ...current,
     ])
@@ -226,34 +239,20 @@ export default function Work() {
             </div>
           </div>
         ) : companiesStatus === 'error' && companyRows.length === 0 ? (
-          <div className="card">
-            <div className="empty">
-              <span className="empty__art">
-                <Icon name="alert" size={38} strokeWidth={1.4} />
-              </span>
-              <h2 className="empty__title">No se pudieron cargar las empresas</h2>
-              <p className="empty__text">{companiesError}</p>
-              {companiesError && (
-                <div className="empty__actions">
-                  <button
-                    type="button"
-                    className="button button--primary"
-                    onClick={loadCompanies}
-                  >
-                    <Icon name="close" size={16} />
-                    Reintentar
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          <ErrorState
+            error={companiesError}
+            title="No se pudieron cargar las empresas"
+            onRetry={loadCompanies}
+          />
         ) : (
           <>
             {companiesStatus === 'error' && companiesError && (
-              <div className="notice">
-                <Icon name="alert" size={14} />
-                <span>{companiesError}</span>
-              </div>
+              <ErrorNotice
+                error={companiesError}
+                title="No se pudieron actualizar las empresas"
+                onRetry={loadCompanies}
+                onDismiss={() => setCompaniesError(null)}
+              />
             )}
             <CompanySummary rows={companyRows} />
           </>
