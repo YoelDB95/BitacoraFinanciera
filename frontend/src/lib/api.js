@@ -381,8 +381,15 @@ export async function createRoute(route) {
   })
 }
 
-export async function getRoutesMonth() {
-  const data = await send('/routes/month')
+export async function getRoutes({ month, startDate, endDate, companyId } = {}) {
+  const params = new URLSearchParams()
+  if (month) params.set('month', month)
+  if (startDate) params.set('startDate', startDate)
+  if (endDate) params.set('endDate', endDate)
+  if (companyId) params.set('companyId', companyId)
+
+  const query = params.toString()
+  const data = await send(`/routes${query ? `?${query}` : ''}`)
   const routes = Array.isArray(data) ? data : (data?.data ?? [])
 
   return (Array.isArray(routes) ? routes : []).map((route) => {

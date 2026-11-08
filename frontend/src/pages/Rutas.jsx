@@ -6,25 +6,43 @@ import ErrorState from '../components/ui/ErrorState.jsx'
 import RouteList from '../components/routes/RouteList.jsx'
 import RouteModal from '../components/work/RouteModal.jsx'
 import { useCompanies } from '../hooks/useCompanies.js'
-import { createRoute, getRoutesMonth } from '../lib/api.js'
-import { formatCount, formatDate } from '../lib/format.js'
+import { createRoute, getRoutes } from '../lib/api.js'
+import { formatCount, formatMonth, toInputMonth } from '../lib/format.js'
 import { companyLabel, routeEntryLabel } from '../lib/routeDisplay.js'
 
-const EMPTY_FILTERS = { date: '', companyId: '' }
+function createDefaultFilters() {
+  return {
+    month: toInputMonth(),
+    companyId: '',
+  }
+}
+
+function toRequestFilters(filters) {
+  return {
+    month: filters.month,
+    companyId: filters.companyId || undefined,
+  }
+}
+
+function validateFilters(filters) {
+  return filters.month ? '' : 'Selecciona un mes.'
+}
 
 export default function Rutas() {
-  const [draft, setDraft] = useState(EMPTY_FILTERS)
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  const defaultFilters = useMemo(() => createDefaultFilters(), [])
+  const [draft, setDraft] = useState(defaultFilters)
+  const [filters, setFilters] = useState(defaultFilters)
+  const [filterError, setFilterError] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [error, setError] = useState(null)
   const [routes, setRoutes] = useState([])
   const [routesStatus, setRoutesStatus] = useState('loading')
   const { companies } = useCompanies()
 
-  const loadRoutes = useCallback(async () => {
+  const loadRoutes = useCallback(async (activeFilters) => {
     setRoutesStatus('loading')
     try {
-      setRoutes(await getRoutesMonth())
+      setRoutes(await getRoutes(toRequestFilters(activeFilters)))
       setRoutesStatus('ready')
       setError(null)
       return true
@@ -38,7 +56,7 @@ export default function Rutas() {
   useEffect(() => {
     let active = true
 
-    getRoutesMonth()
+    getRoutes(toRequestFilters(defaultFilters))
       .then((loadedRoutes) => {
         if (!active) return
         setRoutes(loadedRoutes)
@@ -54,7 +72,7 @@ export default function Rutas() {
     return () => {
       active = false
     }
-  }, [])
+  }, [defaultFilters])
 
   const companyIndex = useMemo(() => {
     const index = {}
@@ -81,18 +99,25 @@ export default function Rutas() {
 
   const companyOptions = useMemo(() => {
     const map = new Map()
+    const knownLabels = new Set()
+    const normalize = (value) => String(value ?? '').trim().toLowerCase()
+
     for (const company of companies) {
-      map.set(company.id, companyLabel(company))
+      const name = companyLabel(company)
+      map.set(company.id, name)
+      knownLabels.add(normalize(name))
     }
+
     for (const route of routes) {
       for (const entry of route.empresas ?? []) {
         if (map.has(entry.companyId)) continue
         const label = routeEntryLabel(entry, companyIndex)
-        if (label !== 'Empresa') {
-          map.set(entry.companyId, label)
-        }
+        if (label === 'Empresa' || knownLabels.has(normalize(label))) continue
+        map.set(entry.companyId, label)
+        knownLabels.add(normalize(label))
       }
     }
+
     return [
       { value: '', label: 'Todas las empresas' },
       ...[...map].map(([value, label]) => ({ value, label })),
@@ -102,7 +127,10 @@ export default function Rutas() {
   const visible = useMemo(() => {
     return routes
       .filter((route) => {
-        if (filters.date && route.fecha !== filters.date) return false
+        if (filters.month && route.fecha.slice(0, 7) !== filters.month) {
+          return false
+        }
+
         if (
           filters.companyId &&
           !(route.empresas ?? []).some(
@@ -118,26 +146,49 @@ export default function Rutas() {
       .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0))
   }, [routes, filters, companyIndex])
 
-  const hasFilters = filters.date !== '' || filters.companyId !== ''
-  const hasDraft = draft.date !== '' || draft.companyId !== ''
+  const isDefaultFilters = (value) =>
+    value.month === defaultFilters.month && value.companyId === ''
+
+  const hasFilters = !isDefaultFilters(filters)
+  const hasDraft = !isDefaultFilters(draft)
+
+  const updateDraft = (field, value) => {
+    setDraft((current) => ({ ...current, [field]: value }))
+    setFilterError('')
+  }
 
   const handleSearch = (event) => {
     event.preventDefault()
-    setFilters({ ...draft })
+
+    const message = validateFilters(draft)
+    if (message) {
+      setFilterError(message)
+      return
+    }
+
+    const nextFilters = { ...draft }
+    setFilterError('')
+    setFilters(nextFilters)
+    loadRoutes(nextFilters)
   }
 
   const handleClear = () => {
-    setDraft(EMPTY_FILTERS)
-    setFilters(EMPTY_FILTERS)
+    const nextFilters = createDefaultFilters()
+    setDraft(nextFilters)
+    setFilters(nextFilters)
+    setFilterError('')
+    loadRoutes(nextFilters)
   }
 
   const handleNewRoute = async (route) => {
     await createRoute(route)
-    await loadRoutes()
+    await loadRoutes(filters)
   }
 
+  const periodLabel = formatMonth(filters.month)
+
   const summary = [
-    filters.date ? formatDate(filters.date) : 'Este mes',
+    periodLabel,
     filters.companyId
       ? (companyOptions.find((option) => option.value === filters.companyId)
           ?.label ?? companyLabel(companyIndex[filters.companyId]))
@@ -152,8 +203,8 @@ export default function Rutas() {
           <h1 className="page-head__title">Rutas</h1>
           <p className="page-head__desc">
             {routesStatus === 'loading'
-              ? 'Cargando las rutas del mes…'
-              : `${routes.length} registros de ruta este mes. Filtra por fecha y empresa para revisar sus entregas.`}
+              ? 'Cargando las rutas…'
+              : `${routes.length} registros de ruta para el mes seleccionado. Filtra por mes y empresa para revisar sus entregas.`}
           </p>
         </div>
         <button
@@ -170,7 +221,7 @@ export default function Rutas() {
         <ErrorNotice
           error={error}
           title="No se pudieron actualizar las rutas"
-          onRetry={loadRoutes}
+          onRetry={() => loadRoutes(filters)}
           onDismiss={() => setError(null)}
         />
       )}
@@ -182,23 +233,21 @@ export default function Rutas() {
           </span>
           <div>
             <h2 className="card__title">Filtrar rutas</h2>
-            <p className="card__subtitle">Consulta por fecha y empresa</p>
+            <p className="card__subtitle">Consulta las rutas de un mes</p>
           </div>
         </div>
 
         <div className="filter-panel__body">
           <div className="field">
-            <label className="field__label" htmlFor="filter-date">
-              Fecha
+            <label className="field__label" htmlFor="filter-month">
+              Mes
             </label>
             <input
-              id="filter-date"
+              id="filter-month"
               className="input"
-              type="date"
-              value={draft.date}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, date: event.target.value }))
-              }
+              type="month"
+              value={draft.month}
+              onChange={(event) => updateDraft('month', event.target.value)}
             />
           </div>
 
@@ -211,7 +260,7 @@ export default function Rutas() {
               className="select"
               value={draft.companyId}
               onChange={(event) =>
-                setDraft((current) => ({ ...current, companyId: event.target.value }))
+                updateDraft('companyId', event.target.value)
               }
             >
               {companyOptions.map((option) => (
@@ -238,6 +287,17 @@ export default function Rutas() {
             </button>
           )}
         </div>
+
+        {filterError && (
+          <p
+            className="field__error"
+            role="alert"
+            style={{ padding: '0 20px 16px' }}
+          >
+            <Icon name="alert" size={13} />
+            {filterError}
+          </p>
+        )}
       </form>
 
       <div className="section-head">
@@ -252,26 +312,23 @@ export default function Rutas() {
 
       {routesStatus === 'loading' && routes.length === 0 ? (
         <p className="card card__subtitle" role="status">
-          Cargando rutas del mes…
+          Cargando rutas…
         </p>
       ) : routesStatus === 'error' && routes.length === 0 ? (
         <ErrorState
           error={error}
-          title="No se pudieron cargar las rutas del mes"
-          onRetry={loadRoutes}
+          title="No se pudieron cargar las rutas"
+          onRetry={() => loadRoutes(filters)}
         />
       ) : visible.length > 0 ? (
-        <RouteList
-          routes={visible}
-          companyIndex={companyIndex}
-        />
+        <RouteList routes={visible} companyIndex={companyIndex} />
       ) : (
         <EmptyState
           icon={hasFilters ? 'search' : 'route'}
           title={hasFilters ? 'Sin resultados' : 'Aún no hay rutas este mes'}
           text={
             hasFilters
-              ? 'No hay rutas que coincidan con la fecha y la empresa seleccionadas.'
+              ? 'No hay rutas que coincidan con el mes y la empresa seleccionados.'
               : 'Registra tus rutas para llevar el control de paquetes, tarifas y ciudades.'
           }
           action={

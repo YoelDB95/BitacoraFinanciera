@@ -57,7 +57,9 @@ export function CompaniesProvider({ children }) {
           .map(fromApiCompany)
           .filter(Boolean)
           .map(withDefaults)
-        if (mapped.length > 0) setCompanies(mapped)
+        // Si el backend responde correctamente, su lista es la fuente de verdad.
+        // El cache local solo se conserva cuando la petición falla.
+        setCompanies(mapped)
       })
       .catch(() => {
         // backend no disponible — se mantienen los datos locales

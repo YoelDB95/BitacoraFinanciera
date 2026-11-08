@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getCompanies,
   getRates,
-  getRoutesMonth,
+  getRoutes,
   toRoutePayload,
 } from './api.js'
 import { ApiError, isApiError } from './errors.js'
@@ -124,46 +124,44 @@ describe('route API payload', () => {
     })
   })
 
-  it('maps current-month endpoint rows for the routes page', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => [
-          {
-            route_company_id: 'route-company-1',
-            destination_city: 'Monterrey',
-            route_date: '2026-10-25',
-            vehicle_km_start: '100',
-            coalesce: '150',
-            packages_received: '12',
-            packages_undelivered: '2',
-            rate_amount: '500',
-            legal_name: 'Empresa Demo',
-            company_routing_type: 'ROUTE',
-            route_type_code: 'RT-101',
-            route_type_name: 'PNU',
-          },
-          {
-            route_company_id: 'route-company-2',
-            destination_city: 'Guadalupe',
-            route_date: '2026-10-26',
-            vehicle_km_start: '150',
-            coalesce: '180',
-            packages_received: '4',
-            packages_undelivered: '0',
-            rate_amount: '80',
-            legal_name: 'Empresa Paquete',
-            company_routing_type: 'PACKAGE',
-            route_type_code: '',
-            route_type_name: '',
-          },
-        ],
-      }),
-    )
+  it('maps filtered endpoint rows for the routes page', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [
+        {
+          route_company_id: 'route-company-1',
+          destination_city: 'Monterrey',
+          route_date: '2026-10-25',
+          vehicle_km_start: '100',
+          coalesce: '150',
+          packages_received: '12',
+          packages_undelivered: '2',
+          rate_amount: '500',
+          legal_name: 'Empresa Demo',
+          company_routing_type: 'ROUTE',
+          route_type_code: 'RT-101',
+          route_type_name: 'PNU',
+        },
+        {
+          route_company_id: 'route-company-2',
+          destination_city: 'Guadalupe',
+          route_date: '2026-10-26',
+          vehicle_km_start: '150',
+          coalesce: '180',
+          packages_received: '4',
+          packages_undelivered: '0',
+          rate_amount: '80',
+          legal_name: 'Empresa Paquete',
+          company_routing_type: 'PACKAGE',
+          route_type_code: '',
+          route_type_name: '',
+        },
+      ],
+    })
+    vi.stubGlobal('fetch', fetchMock)
 
-    await expect(getRoutesMonth()).resolves.toEqual([
+    await expect(getRoutes({ month: '2026-10' })).resolves.toEqual([
       {
         id: 'route-company-1',
         routeCode: 'Ruta',
@@ -207,6 +205,35 @@ describe('route API payload', () => {
         ],
       },
     ])
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/routes?month=2026-10'),
+      expect.any(Object),
+    )
+  })
+
+  it('sends range filters and company to the routes endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [],
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      getRoutes({
+        startDate: '2026-10-01',
+        endDate: '2026-10-15',
+        companyId: 'company-1',
+      }),
+    ).resolves.toEqual([])
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '/api/routes?startDate=2026-10-01&endDate=2026-10-15&companyId=company-1',
+      ),
+      expect.any(Object),
+    )
   })
 })
 
