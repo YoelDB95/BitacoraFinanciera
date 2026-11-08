@@ -3,7 +3,7 @@
 */
 
 import { db } from "../../../prisma/db.js";
-import { CompanyRouteWithoutRouteID, Route } from "./routes.types.js";
+import { CompanyRouteWithoutRouteID, FilterRoutes, Route } from "./routes.types.js";
 
 const getRouteRates = async () => {
   const runtime = db.runtime();
@@ -31,51 +31,94 @@ const getRouteRates = async () => {
   return await runtime.query(plan);
 }
 
-const getRoutes = () => {
- return db.orm.public.Routes.select('kilometers')
-  .include('routeCompanies', (routeCompanies) =>
-    routeCompanies.select('id', 'companyId', 'routeId', 'billingAmount', 'rateAmount', 'packagesReceived', 'packagesUndelivered')
-  )
-  .all()
-}
-
-const getRoutesMonth = async () => {
+const getRoutes = async (filters: FilterRoutes) => {
   const runtime = db.runtime();
-  const plan = db.raw.sql`
-    SELECT rc.id AS route_company_id, 
-      destination_city, 
-      route_date, 
-      vehicle_km_start, 
-      COALESCE(vehicle_km_end, 0) as vehicle_km_end, 
-      packages_received, 
-      packages_undelivered, 
-      COALESCE(rate_amount,0) as rate_amount, 
-      cc.legal_name AS legal_name,
-      cc.routing_type::text AS company_routing_type,
-      COALESCE(rt.code, '') AS route_type_code,
-      COALESCE(rt.name, '') AS route_type_name
-    FROM routes rr
-    INNER JOIN route_companies rc ON rr.id = rc.route_id 
-    INNER JOIN companies cc ON cc.id = rc.company_id
-    LEFT JOIN route_types rt ON rt.id = rc.route_type_id
-    WHERE rr.route_date >= DATE_TRUNC('month', CURRENT_DATE)
-    AND  rr.route_date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
-  `
-    .returnsRow({
-      route_company_id: 'pg/uuid@1',
-      destination_city: 'pg/varchar@1',
-      route_date: 'pg/date-string@1',
-      vehicle_km_start: 'pg/numeric@1',
-      vehicle_km_end: 'pg/numeric@1',
-      packages_received: 'pg/numeric@1',
-      packages_undelivered: 'pg/numeric@1',
-      rate_amount: 'pg/numeric@1',
-      legal_name: 'pg/varchar@1',
-      company_routing_type: 'pg/varchar@1',
-      route_type_code: 'pg/varchar@1',
-      route_type_name: 'pg/varchar@1'
-    })
-    .build();
+  let plan
+  const companyId = filters.companyId ?? '';
+
+  if (filters.month) {
+    plan = db.raw.sql`
+      SELECT rc.id AS route_company_id,
+        rc.company_id AS company_id,
+        destination_city,
+        route_date,
+        vehicle_km_start,
+        COALESCE(vehicle_km_end, 0) as vehicle_km_end,
+        packages_received,
+        packages_undelivered,
+        COALESCE(rate_amount,0) as rate_amount,
+        cc.legal_name AS legal_name,
+        cc.routing_type::text AS company_routing_type,
+        COALESCE(rt.code, '') AS route_type_code,
+        COALESCE(rt.name, '') AS route_type_name
+      FROM routes rr
+      INNER JOIN route_companies rc ON rr.id = rc.route_id
+      INNER JOIN companies cc ON cc.id = rc.company_id
+      LEFT JOIN route_types rt ON rt.id = rc.route_type_id
+      WHERE rr.route_date >= TO_DATE(${filters.month} || '-01', 'YYYY-MM-DD')
+      AND rr.route_date < TO_DATE(${filters.month} || '-01', 'YYYY-MM-DD') + INTERVAL '1 month'
+      AND (NULLIF(${companyId}, '') IS NULL OR rc.company_id = NULLIF(${companyId}, '')::uuid)
+    `
+      .returnsRow({
+        route_company_id: 'pg/uuid@1',
+        company_id: 'pg/uuid@1',
+        destination_city: 'pg/varchar@1',
+        route_date: 'pg/date-string@1',
+        vehicle_km_start: 'pg/numeric@1',
+        vehicle_km_end: 'pg/numeric@1',
+        packages_received: 'pg/numeric@1',
+        packages_undelivered: 'pg/numeric@1',
+        rate_amount: 'pg/numeric@1',
+        legal_name: 'pg/varchar@1',
+        company_routing_type: 'pg/varchar@1',
+        route_type_code: 'pg/varchar@1',
+        route_type_name: 'pg/varchar@1'
+      })
+      .build();
+  }
+  else {
+    if (!filters.startDate || !filters.endDate) {
+      throw new Error('Debe proporcionar startDate y endDate para filtrar las rutas');
+    }
+
+    plan = db.raw.sql`
+      SELECT rc.id AS route_company_id,
+        rc.company_id AS company_id,
+        destination_city,
+        route_date,
+        vehicle_km_start,
+        COALESCE(vehicle_km_end, 0) as vehicle_km_end,
+        packages_received,
+        packages_undelivered,
+        COALESCE(rate_amount,0) as rate_amount,
+        cc.legal_name AS legal_name,
+        cc.routing_type::text AS company_routing_type,
+        COALESCE(rt.code, '') AS route_type_code,
+        COALESCE(rt.name, '') AS route_type_name
+      FROM routes rr
+      INNER JOIN route_companies rc ON rr.id = rc.route_id
+      INNER JOIN companies cc ON cc.id = rc.company_id
+      LEFT JOIN route_types rt ON rt.id = rc.route_type_id
+      WHERE rr.route_date BETWEEN ${filters.startDate}::date AND ${filters.endDate}::date
+      AND (NULLIF(${companyId}, '') IS NULL OR rc.company_id = NULLIF(${companyId}, '')::uuid)
+    `
+      .returnsRow({
+        route_company_id: 'pg/uuid@1',
+        company_id: 'pg/uuid@1',
+        destination_city: 'pg/varchar@1',
+        route_date: 'pg/date-string@1',
+        vehicle_km_start: 'pg/numeric@1',
+        vehicle_km_end: 'pg/numeric@1',
+        packages_received: 'pg/numeric@1',
+        packages_undelivered: 'pg/numeric@1',
+        rate_amount: 'pg/numeric@1',
+        legal_name: 'pg/varchar@1',
+        company_routing_type: 'pg/varchar@1',
+        route_type_code: 'pg/varchar@1',
+        route_type_name: 'pg/varchar@1'
+      })
+      .build();
+  }
 
   return await runtime.query(plan);
 }
@@ -158,4 +201,4 @@ const getTypeRoute = (nameCode: string) => {
   .first()
 }
 
-export default { getRouteRates, getRoutes, getTypeRoute, createRouteWithCompanies, getRoutesMonth }
+export default { getRouteRates, getRoutes, getTypeRoute, createRouteWithCompanies }

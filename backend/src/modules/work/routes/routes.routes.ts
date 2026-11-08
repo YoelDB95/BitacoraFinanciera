@@ -8,7 +8,6 @@ import routesController from './routes.controller'
 const router = Router()
 
 router.get('/', routesController.getRoutes)
-router.get('/month', routesController.getRoutesMonth)
 router.post('/', routesController.createRoute)
 
 export default router

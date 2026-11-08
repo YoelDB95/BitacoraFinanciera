@@ -7,16 +7,6 @@ import routesService from "./routes.service.js";
 
 
 
-const getRoutes = async (req: Request, res: Response): Promise<Response> => {
-	try {
-    const routes = await routesService.getRoutes()
-  	return res.status(200).json(routes)
-  } catch (e) {
-    console.error(e)
-    return res.status(500).json({error: 'error'})
-  }
-}
-
 const createRoute = async (req: Request, res: Response): Promise<Response> => {
   try {
     const route = req.body
@@ -28,9 +18,10 @@ const createRoute = async (req: Request, res: Response): Promise<Response> => {
   }
 }
 
-const getRoutesMonth = async (req: Request, res: Response): Promise<Response> => {
+const getRoutes = async (req: Request, res: Response): Promise<Response> => {
   try {
-		const routes = await routesService.getRoutesMonth()
+    const filters = req.query
+		const routes = await routesService.getRoutes(filters)
 		return res.status(200).json(routes);
   } catch(e) {
 		console.log(e);
@@ -40,6 +31,5 @@ const getRoutesMonth = async (req: Request, res: Response): Promise<Response> =>
 
 export default {
     getRoutes,
-    createRoute,
-		getRoutesMonth
+    createRoute
 }

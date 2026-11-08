@@ -2,16 +2,46 @@
         Contiene las reglas de negocio y coordina operaciones entre entidades.
 */
 
-import { CompanyRouteWithoutRouteID, CreateRouteInput  } from './routes.types'
+import { CompanyRouteWithoutRouteID, CreateRouteInput, FilterRoutes  } from './routes.types'
 import routesRepository from "./routes.repository"
 
-const getRoutes = () => {
-  return routesRepository.getRoutes()
+const getRoutes = (filters: FilterRoutes) => {
+  const hasMonth = Boolean(filters.month)
+  const hasRange = Boolean(filters.startDate || filters.endDate)
+
+  // Debe venir exactamente uno de los dos modos.
+  if (!hasMonth && !hasRange) {
+    throw new Error('Debe proporcionar un mes o un rango de fechas para filtrar las rutas')
+  }
+
+  if (hasMonth && hasRange) {
+    throw new Error('No se puede proporcionar un mes y un rango de fechas al mismo tiempo')
+  }
+
+  // Validación del modo mes.
+  if (hasMonth && !filters.month!.match(/^\d{4}-(0[1-9]|1[0-2])$/)) {
+    throw new Error('El mes debe tener el formato YYYY-MM')
+  }
+
+  // Validación del modo rango.
+  if (hasRange) {
+    if (!filters.startDate || !filters.endDate) {
+      throw new Error('Debe proporcionar startDate y endDate para filtrar por rango')
+    }
+
+    if (!filters.startDate || !filters.endDate) {
+      throw new Error('El rango de fechas debe tener el formato YYYY-MM-DD')
+    }
+
+    if (filters.startDate > filters.endDate) {
+      throw new Error('startDate no puede ser posterior a endDate')
+    }
+  }
+
+  // implementar la busqueda de empresas por companyId si se proporciona
+  return routesRepository.getRoutes(filters)
 }
 
-const getRoutesMonth = () => {
-  return routesRepository.getRoutesMonth()
-}
 const createRoute = async (route: CreateRouteInput) => {
   console.log('route in service: ', route);
 	
@@ -114,6 +144,5 @@ const createRoute = async (route: CreateRouteInput) => {
 
 export default {
   getRoutes,
-  createRoute,
-  getRoutesMonth
+  createRoute
 }

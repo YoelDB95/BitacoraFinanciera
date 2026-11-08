@@ -56,3 +56,10 @@ export interface CompanyRoute {
 }
 
 export type CompanyRouteWithoutRouteID = Omit<CompanyRoute, 'routeId'>
+
+export interface FilterRoutes {
+	startDate?: string;
+	endDate?: string;
+	month?: string;
+	companyId?: string | null;
+}
