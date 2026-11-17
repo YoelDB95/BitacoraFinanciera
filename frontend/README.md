@@ -17,21 +17,16 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## URL de la API por entorno
 
-Los comandos toman la URL base de la API desde variables globales y la exponen a Vite como `VITE_API_URL`:
+Las URLs se definen en `frontend/.env` y los comandos exponen la correspondiente a Vite como `VITE_API_URL`:
 
-| Comando | Variable global |
+| Comando | Variable en `.env` |
 | --- | --- |
 | `pnpm run dev` | `VITE_API_URL_DEV` |
 | `pnpm run build` | `VITE_API_URL_PROD` |
 
-Ejemplo en PowerShell:
-
-```powershell
-$env:VITE_API_URL_DEV = "http://localhost:3000/api"
-pnpm run dev
-
-$env:VITE_API_URL_PROD = "https://api.midominio.com/api"
-pnpm run build
+```dotenv
+VITE_API_URL_DEV=http://localhost:3000/api
+VITE_API_URL_PROD=https://bitacorafinanciera.onrender.com/api
 ```
 
-Si la variable correspondiente no está definida, el comando falla con un mensaje indicando cuál falta.
+Si la variable correspondiente no está definida en `.env`, el comando falla con un mensaje indicando cuál falta.

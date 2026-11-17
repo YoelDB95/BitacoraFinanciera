@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { loadEnv } from 'vite'
 
 const require = createRequire(import.meta.url)
 const vitePackage = require.resolve('vite/package.json')
@@ -8,10 +9,12 @@ const viteBin = path.join(path.dirname(vitePackage), 'bin', 'vite.js')
 
 const CONFIGS = {
   dev: {
+    mode: 'development',
     envVar: 'VITE_API_URL_DEV',
     args: [],
   },
   build: {
+    mode: 'production',
     envVar: 'VITE_API_URL_PROD',
     args: ['build'],
   },
@@ -26,10 +29,11 @@ if (!config) {
   process.exit(1)
 }
 
-const apiUrl = String(process.env[config.envVar] ?? '').trim()
+const env = loadEnv(config.mode, process.cwd(), '')
+const apiUrl = String(env[config.envVar] ?? '').trim()
 
 if (!apiUrl) {
-  console.error(`Falta la variable global ${config.envVar}.`)
+  console.error(`Falta ${config.envVar} en frontend/.env.`)
   console.error(`Definila antes de ejecutar pnpm run ${command}.`)
   process.exit(1)
 }

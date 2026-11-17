@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": "./",
     "outDir": "./dist",
     "target": "ES2022",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": false,
-    "module": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
   },
   "include": ["src/**/*.ts"]
 }
