@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  deleteCompanyRoute,
+  deleteRoute,
   getCompanies,
   getRates,
   getRoutes,
   toRoutePayload,
+  toUpdateRoutePayload,
+  updateRoute,
 } from './api.js'
 import { ApiError, isApiError } from './errors.js'
 
@@ -67,6 +71,7 @@ describe('route API payload', () => {
           rateAmount: 7589,
           packageAmount: 7589,
           companyRateId: 'company-rate',
+          routeTypeId: null,
         },
       ],
     })
@@ -91,6 +96,90 @@ describe('route API payload', () => {
       rateAmount: null,
       routeRateAmount: null,
       routeRateId: null,
+      routeTypeId: null,
+    })
+  })
+
+  it('serializes a flat update payload with the selected company values', () => {
+    expect(
+      toUpdateRoutePayload(
+        {
+          routeDate: '2026-11-08',
+          destinationCity: 'Azul',
+          vehicleKmStart: 111000,
+          vehicleKmEnd: 111111,
+          notes: null,
+          companies: [
+            {
+              companyId: 'company-route',
+              routingType: 'ROUTE',
+              packagesReceived: 110,
+              packagesUndelivered: 3,
+              rateAmount: 121000,
+              routeRateAmount: 121000,
+              routeRateId: 'route-rate',
+              routeTypeId: 'route-type',
+            },
+          ],
+        },
+        'route-1',
+        'route-company-1',
+      ),
+    ).toEqual({
+      routeId: 'route-1',
+      routeCompanyId: 'route-company-1',
+      routeDate: '2026-11-08',
+      destinationCity: 'Azul',
+      vehicleKmStart: 111000,
+      vehicleKmEnd: 111111,
+      notes: null,
+      companyId: 'company-route',
+      packagesReceived: 110,
+      packagesUndelivered: 3,
+      rateAmount: 121000,
+      routeRateAmount: 121000,
+      routeRateId: 'route-rate',
+      routeTypeId: 'route-type',
+    })
+  })
+
+  it('keeps package ids and amounts in the flat update payload', () => {
+    expect(
+      toUpdateRoutePayload(
+        {
+          routeDate: '2026-11-08',
+          destinationCity: 'Azul',
+          vehicleKmStart: 10,
+          vehicleKmEnd: null,
+          companies: [
+            {
+              companyId: 'company-package',
+              routingType: 'PACKAGE',
+              packagesReceived: 4,
+              packagesUndelivered: 0,
+              rateAmount: 1840,
+              packageAmount: 1840,
+              companyRateId: 'company-rate',
+            },
+          ],
+        },
+        'route-2',
+        'route-company-2',
+      ),
+    ).toEqual({
+      routeId: 'route-2',
+      routeCompanyId: 'route-company-2',
+      routeDate: '2026-11-08',
+      destinationCity: 'Azul',
+      vehicleKmStart: 10,
+      vehicleKmEnd: null,
+      notes: null,
+      companyId: 'company-package',
+      packagesReceived: 4,
+      packagesUndelivered: 0,
+      rateAmount: 1840,
+      companyRateAmount: 1840,
+      companyRateId: 'company-rate',
       routeTypeId: null,
     })
   })
@@ -131,20 +220,26 @@ describe('route API payload', () => {
       json: async () => [
         {
           route_company_id: 'route-company-1',
+          route_id: 'route-1',
           destination_city: 'Monterrey',
           route_date: '2026-10-25',
+          notes: 'Nota de ruta',
           vehicle_km_start: '100',
           coalesce: '150',
           packages_received: '12',
           packages_undelivered: '2',
           rate_amount: '500',
+          billing_amount: '450',
           legal_name: 'Empresa Demo',
           company_routing_type: 'ROUTE',
           route_type_code: 'RT-101',
           route_type_name: 'PNU',
+          route_rate_id: 'route-rate-1',
+          route_type_id: 'route-type-1',
         },
         {
           route_company_id: 'route-company-2',
+          route_id: 'route-2',
           destination_city: 'Guadalupe',
           route_date: '2026-10-26',
           vehicle_km_start: '150',
@@ -156,6 +251,7 @@ describe('route API payload', () => {
           company_routing_type: 'PACKAGE',
           route_type_code: '',
           route_type_name: '',
+          company_rate_id: 'company-rate-2',
         },
       ],
     })
@@ -164,12 +260,16 @@ describe('route API payload', () => {
     await expect(getRoutes({ month: '2026-10' })).resolves.toEqual([
       {
         id: 'route-company-1',
+        routeId: 'route-1',
+        routeCompanyId: 'route-company-1',
         routeCode: 'Ruta',
         fecha: '2026-10-25',
         city: 'Monterrey',
+        notes: 'Nota de ruta',
         kmInicial: 100,
         kmFinal: 150,
         rateAmount: 500,
+        billingAmount: 450,
         empresas: [
           {
             key: 'route-company-1',
@@ -180,17 +280,24 @@ describe('route API payload', () => {
             routeTypeName: 'PNU',
             paquetes: 12,
             noEntregados: 2,
+            routeRateId: 'route-rate-1',
+            routeTypeId: 'route-type-1',
+            companyRateId: '',
           },
         ],
       },
       {
         id: 'route-company-2',
+        routeId: 'route-2',
+        routeCompanyId: 'route-company-2',
         routeCode: 'Ruta',
         fecha: '2026-10-26',
         city: 'Guadalupe',
+        notes: '',
         kmInicial: 150,
         kmFinal: 180,
         rateAmount: 80,
+        billingAmount: null,
         empresas: [
           {
             key: 'route-company-2',
@@ -201,6 +308,9 @@ describe('route API payload', () => {
             routeTypeName: '',
             paquetes: 4,
             noEntregados: 0,
+            routeRateId: '',
+            routeTypeId: '',
+            companyRateId: 'company-rate-2',
           },
         ],
       },
@@ -233,6 +343,81 @@ describe('route API payload', () => {
         '/api/routes?startDate=2026-10-01&endDate=2026-10-15&companyId=company-1',
       ),
       expect.any(Object),
+    )
+  })
+})
+
+describe('route mutations', () => {
+  it('updates a route company with a PUT and the shared route payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ updated: true }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const payload = {
+      routeDate: '2026-10-17',
+      destinationCity: 'Monterrey',
+      vehicleKmStart: 100,
+      vehicleKmEnd: 150,
+      notes: 'Visita',
+      companies: [
+        {
+          companyId: 'company-1',
+          routingType: 'ROUTE',
+          packagesReceived: 12,
+          packagesUndelivered: 2,
+          rateAmount: 500,
+          routeRateAmount: 500,
+          routeRateId: 'route-rate-1',
+          routeTypeId: 'route-type-1',
+        },
+      ],
+    }
+
+    await expect(
+      updateRoute('route-1', 'route-company-1', payload),
+    ).resolves.toEqual({ updated: true })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/routes/route-1/route-company-1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify(
+          toUpdateRoutePayload(payload, 'route-1', 'route-company-1'),
+        ),
+      }),
+    )
+  })
+
+  it('deletes a complete route', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(deleteRoute('route-1')).resolves.toBeNull()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/routes/route-1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+
+  it('deletes only the selected company route', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(deleteCompanyRoute('route-company-1')).resolves.toBeNull()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/routes/companyRoute/route-company-1'),
+      expect.objectContaining({ method: 'DELETE' }),
     )
   })
 })

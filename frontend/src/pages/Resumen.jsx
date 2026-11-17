@@ -1,22 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
 import ErrorNotice from '../components/ui/ErrorNotice.jsx'
 import ErrorState from '../components/ui/ErrorState.jsx'
 import DateRangeSelector from '../components/work/DateRangeSelector.jsx'
 import CompanySummary from '../components/work/CompanySummary.jsx'
-import RoutesChart from '../components/work/RoutesChart.jsx'
+import CompanyRoutesCard from '../components/work/CompanyRoutesCard.jsx'
 import RouteModal from '../components/work/RouteModal.jsx'
 import InvoiceModal from '../components/work/InvoiceModal.jsx'
 import {
-  ROUTES as SEED_ROUTES,
-  INVOICES as SEED_INVOICES,
   resolvePreset,
-  filterByPeriod,
   summarize,
   summarizeByCompany,
-  countRoutesByType,
+  routeCompanyCards,
 } from '../lib/work.js'
-import { createRoute, getCompanies } from '../lib/api.js'
+import { createRoute, getCompanies, getRoutes } from '../lib/api.js'
 import { formatCount, formatCurrency, formatDate, formatKm } from '../lib/format.js'
 
 async function fetchCompanies() {
@@ -32,10 +29,13 @@ export default function Work() {
     ...resolvePreset('30'),
     preset: '30',
   }))
-  const [routes, setRoutes] = useState(SEED_ROUTES)
-  const [invoices, setInvoices] = useState(SEED_INVOICES)
+  const [routes, setRoutes] = useState([])
+  const [routesStatus, setRoutesStatus] = useState('loading')
+  const [routesError, setRoutesError] = useState(null)
+  const [invoices, setInvoices] = useState([])
   const [routeModal, setRouteModal] = useState(false)
   const [invoiceModal, setInvoiceModal] = useState(false)
+  const routesRequest = useRef(0)
 
   const loadCompanies = useCallback(async () => {
     setCompaniesStatus('loading')
@@ -68,49 +68,94 @@ export default function Work() {
     }
   }, [])
 
-  const periodRoutes = useMemo(
-    () => filterByPeriod(routes, range),
-    [routes, range],
-  )
+  useEffect(() => {
+    if (!range.from || !range.to) return
+
+    let active = true
+    const requestId = routesRequest.current + 1
+    routesRequest.current = requestId
+
+    getRoutes({ startDate: range.from, endDate: range.to })
+      .then((rows) => {
+        if (!active || requestId !== routesRequest.current) return
+        setRoutes(rows)
+        setRoutesError(null)
+        setRoutesStatus('ready')
+      })
+      .catch((err) => {
+        if (!active || requestId !== routesRequest.current) return
+        setRoutesError(err)
+        setRoutesStatus('error')
+      })
+
+    return () => {
+      active = false
+      routesRequest.current += 1
+    }
+  }, [range.from, range.to])
+
+  const reloadRoutes = useCallback(async () => {
+    if (!range.from || !range.to) return
+
+    const requestId = routesRequest.current + 1
+    routesRequest.current = requestId
+
+    try {
+      const rows = await getRoutes({
+        startDate: range.from,
+        endDate: range.to,
+      })
+      if (requestId !== routesRequest.current) return
+      setRoutes(rows)
+      setRoutesError(null)
+      setRoutesStatus('ready')
+    } catch (err) {
+      if (requestId !== routesRequest.current) return
+      setRoutesError(err)
+      setRoutesStatus('error')
+    }
+  }, [range.from, range.to])
+
+  const retryRoutes = useCallback(() => {
+    setRoutesStatus('loading')
+    reloadRoutes()
+  }, [reloadRoutes])
+
+  const handleRangeChange = (next) => {
+    setRange(next)
+
+    if (next.from && next.to) {
+      setRoutesStatus('loading')
+      return
+    }
+
+    routesRequest.current += 1
+    setRoutes([])
+    setRoutesError(null)
+    setRoutesStatus('ready')
+  }
+
   const stats = useMemo(
-    () => summarize(periodRoutes, companies),
-    [periodRoutes, companies],
+    () => summarize(routes, companies),
+    [routes, companies],
   )
   const companyRows = useMemo(
-    () => summarizeByCompany(periodRoutes, companies),
-    [periodRoutes, companies],
+    () => summarizeByCompany(routes, companies),
+    [routes, companies],
   )
-  const periodInvoices = useMemo(
-    () => filterByPeriod(invoices, range),
-    [invoices, range],
+  const routeCards = useMemo(
+    () => routeCompanyCards(routes, companies),
+    [routes, companies],
   )
-  const routesByType = useMemo(
-    () => countRoutesByType(periodRoutes),
-    [periodRoutes],
+  const classifiedRoutes = useMemo(
+    () => routeCards.reduce((total, card) => total + card.total, 0),
+    [routeCards],
   )
 
   const handleNewRoute = async (route) => {
     await createRoute(route)
-
-    const id = `ruta-${Date.now()}`
-    setRoutes((current) => [
-      {
-        id,
-        fecha: route.routeDate,
-        routeCode: route.routeCode ?? 'Ruta',
-        city: route.destinationCity,
-        kmInicial: route.vehicleKmStart,
-        kmFinal: route.vehicleKmEnd ?? route.vehicleKmStart,
-        observaciones: route.notes ?? '',
-        empresas: (route.companies ?? []).map((entry, index) => ({
-          key: `${id}-${index}`,
-          companyId: entry.companyId,
-          paquetes: entry.packagesReceived,
-          noEntregados: entry.packagesUndelivered,
-        })),
-      },
-      ...current,
-    ])
+    setRoutesStatus('loading')
+    await reloadRoutes()
   }
 
   const handleNewInvoice = (invoice) => {
@@ -127,6 +172,8 @@ export default function Work() {
     range.from && range.to
       ? `${formatDate(range.from)} — ${formatDate(range.to)}`
       : 'Sin período definido'
+
+  const loadingPage = companiesStatus === 'loading' || routesStatus === 'loading'
 
   return (
     <>
@@ -162,7 +209,7 @@ export default function Work() {
           </span>
           <p className="stat__value">{formatCurrency(stats.monto)}</p>
           <p className="stat__hint">
-            {formatCount(periodInvoices.length)} facturas emitidas
+            {formatCount(stats.empresas)} empresas en el período
           </p>
         </div>
 
@@ -189,7 +236,7 @@ export default function Work() {
           </div>
         </div>
         <div className="card__body">
-          <DateRangeSelector value={range} onChange={setRange} />
+          <DateRangeSelector value={range} onChange={handleRangeChange} />
         </div>
       </section>
 
@@ -199,18 +246,77 @@ export default function Work() {
           <div>
             <h2 className="work-section__title">Rutas realizadas</h2>
             <p className="work-section__subtitle">
-              Cantidad de veces que se hizo cada ruta en el período seleccionado.
+              Rutas de reparto clasificadas por empresa en el período
+              seleccionado.
             </p>
           </div>
           <span className="results-count">
-            {formatCount(periodRoutes.length)} rutas
+            {loadingPage
+              ? 'Cargando…'
+              : `${formatCount(classifiedRoutes)} rutas`}
           </span>
         </div>
-        <div className="card work-card">
-          <div className="card__body">
-            <RoutesChart data={routesByType} total={periodRoutes.length} />
+
+        {loadingPage ? (
+          <div className="card">
+            <div className="empty">
+              <span className="empty__art">
+                <Icon name="route" size={38} strokeWidth={1.4} />
+              </span>
+              <h2 className="empty__title">Cargando rutas…</h2>
+            </div>
           </div>
-        </div>
+        ) : routesStatus === 'error' && routes.length === 0 ? (
+          <ErrorState
+            error={routesError}
+            title="No se pudieron cargar las rutas"
+            onRetry={retryRoutes}
+          />
+        ) : companiesStatus === 'error' && companies.length === 0 ? (
+          <ErrorState
+            error={companiesError}
+            title="No se pudieron cargar las empresas"
+            onRetry={loadCompanies}
+          />
+        ) : (
+          <>
+            {routesStatus === 'error' && routesError && (
+              <ErrorNotice
+                error={routesError}
+                title="No se pudieron actualizar las rutas"
+                onRetry={retryRoutes}
+                onDismiss={() => setRoutesError(null)}
+              />
+            )}
+
+            {routeCards.length === 0 ? (
+              <div className="card">
+                <div className="empty">
+                  <span className="empty__art">
+                    <Icon name="route" size={38} strokeWidth={1.4} />
+                  </span>
+                  <h2 className="empty__title">Sin rutas clasificadas</h2>
+                  <p className="empty__text">
+                    Cuando las rutas de reparto tengan un tipo de ruta
+                    asignado, verás aquí el detalle por empresa.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="company-grid">
+                {routeCards.map((card, index) => (
+                  <CompanyRoutesCard
+                    key={card.company.id}
+                    company={card.company}
+                    data={card.data}
+                    total={card.total}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       {/* 4 · Resumen de empresas */}

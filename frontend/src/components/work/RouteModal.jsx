@@ -6,39 +6,163 @@ import FormErrors from '../ui/FormErrors.jsx'
 import { formatCurrency, toInputDate } from '../../lib/format.js'
 import { getRates } from '../../lib/api.js'
 
-export default function RouteModal({ open, onClose, onCreate, companies = [] }) {
+function toText(value) {
+  return value == null || value === '' ? '' : String(value)
+}
+
+function createEmpresa(route) {
+  const entry = route?.empresas?.[0]
+  if (!entry) {
+    return {
+      key: 1,
+      companyId: '',
+      companyName: '',
+      routingType: '',
+      routeTypeName: '',
+      routeTypeCode: '',
+      paquetes: '',
+      noEntregados: '',
+      routeRateId: '',
+      routeTypeId: '',
+      companyRateId: '',
+      rateAmount: null,
+      packageAmount: null,
+    }
+  }
+
+  return {
+    key: entry.key ?? route.id,
+    companyId: entry.companyId ?? '',
+    companyName: entry.companyName ?? '',
+    routingType: entry.routingType ?? '',
+    routeTypeName: entry.routeTypeName ?? '',
+    routeTypeCode: entry.routeTypeCode ?? '',
+    paquetes: toText(entry.paquetes),
+    noEntregados: toText(entry.noEntregados),
+    routeRateId: entry.routeRateId ?? '',
+    routeTypeId: entry.routeTypeId ?? '',
+    companyRateId: entry.companyRateId ?? '',
+    rateAmount: entry.rateAmount ?? route.rateAmount ?? null,
+    packageAmount: entry.packageAmount ?? null,
+  }
+}
+
+function normalizeLabel(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function mostRecentRate(rates = []) {
+  return [...rates].sort((a, b) =>
+    String(b.validFrom ?? '').localeCompare(String(a.validFrom ?? '')),
+  )[0]
+}
+
+function resolveRouteRate(rates = [], entry = {}) {
+  // El id de tarifa puede repetirse entre tipos (por ejemplo, PNU comparte la
+  // tarifa base de Ruta A), así que primero se busca por tipo de ruta.
+  if (entry.routeTypeId) {
+    const byType = rates.find((rate) => rate.routeTypeId === entry.routeTypeId)
+    if (byType) return byType
+  }
+
+  const typeLabel = normalizeLabel(entry.routeTypeName || entry.routeTypeCode)
+  if (typeLabel) {
+    const byName = rates.filter(
+      (rate) => normalizeLabel(rate.name) === typeLabel,
+    )
+    if (byName.length > 0) return mostRecentRate(byName)
+  }
+
+  if (entry.rateAmount != null) {
+    const byAmount = rates.filter(
+      (rate) => Number(rate.amount) === Number(entry.rateAmount),
+    )
+    const typeIds = new Set(byAmount.map((rate) => rate.routeTypeId))
+    if (byAmount.length > 0 && typeIds.size === 1) {
+      return mostRecentRate(byAmount)
+    }
+  }
+
+  if (entry.routeRateId) {
+    const byId = rates.filter((rate) => rate.id === entry.routeRateId)
+    const typeIds = new Set(byId.map((rate) => rate.routeTypeId))
+    if (byId.length > 0 && typeIds.size === 1) return byId[0]
+  }
+
+  return null
+}
+
+function rateSelectionValue(rate) {
+  return rate?.routeTypeId || rate?.id || ''
+}
+
+function findSelectedRate(rates = [], selection) {
+  if (!selection) return null
+  return rates.find((rate) => rateSelectionValue(rate) === selection) ?? null
+}
+
+export default function RouteModal({
+  open,
+  onClose,
+  onCreate,
+  onUpdate,
+  onDeleteRoute,
+  route = null,
+  companies = [],
+}) {
+  const editing = Boolean(route)
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Nueva ruta"
-      description="Registra una ruta de reparto con las empresas involucradas."
+      title={editing ? 'Editar ruta' : 'Nueva ruta'}
+      description={
+        editing
+          ? 'Modifica los datos de la ruta y la empresa asociada.'
+          : 'Registra una ruta de reparto con las empresas involucradas.'
+      }
       icon="route"
     >
       {open && (
-        <RouteForm onDone={onClose} onCreate={onCreate} companies={companies} />
+        <RouteForm
+          key={route?.routeCompanyId ?? route?.id ?? 'new'}
+          onDone={onClose}
+          onCreate={onCreate}
+          onUpdate={onUpdate}
+          onDeleteRoute={onDeleteRoute}
+          route={route}
+          companies={companies}
+        />
       )}
     </Modal>
   )
 }
 
-function RouteForm({ onDone, onCreate, companies = [] }) {
+function RouteForm({
+  onDone,
+  onCreate,
+  onUpdate,
+  onDeleteRoute,
+  route,
+  companies = [],
+}) {
+  const editing = Boolean(route)
   const [rates, setRates] = useState({ ROUTE: [], PACKAGE: [] })
   const [ratesStatus, setRatesStatus] = useState('loading')
   const [ratesError, setRatesError] = useState(null)
   const [ratesReload, setRatesReload] = useState(0)
   const [submitError, setSubmitError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState({
-    fecha: toInputDate(),
-    city: '',
-    kmInicial: '',
-    kmFinal: '',
-    observaciones: '',
-  })
-  const [empresas, setEmpresas] = useState([
-    { key: 1, companyId: '', paquetes: '' },
-  ])
+  const [deleting, setDeleting] = useState(false)
+  const [form, setForm] = useState(() => ({
+    fecha: route?.fecha || toInputDate(),
+    city: route?.city || '',
+    kmInicial: route ? toText(route.kmInicial) : '',
+    kmFinal: route ? toText(route.kmFinal) : '',
+    observaciones: route?.notes ?? '',
+  }))
+  const [empresas, setEmpresas] = useState(() => [createEmpresa(route)])
   const [errors, setErrors] = useState({})
 
   // Vuelve a pedir las tarifas y muestra el estado de carga.
@@ -110,7 +234,37 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
           ? {
               ...entry,
               [field]: value,
-              ...(field === 'companyId' ? { routeRateId: '' } : {}),
+              ...(field === 'companyId'
+                ? {
+                    companyName: '',
+                    routeTypeName: '',
+                    routeTypeCode: '',
+                    routeRateId: '',
+                    routeTypeId: '',
+                    companyRateId: '',
+                    rateAmount: null,
+                    packageAmount: null,
+                  }
+                : {}),
+            }
+          : entry,
+      ),
+    )
+  }
+
+  const updateRouteRate = (rowIndex, selection) => {
+    const rate = findSelectedRate(rates.ROUTE, selection)
+
+    setEmpresas((current) =>
+      current.map((entry, index) =>
+        index === rowIndex
+          ? {
+              ...entry,
+              routeRateId: rate?.id || '',
+              routeTypeId: rate?.routeTypeId || '',
+              routeTypeName: '',
+              routeTypeCode: '',
+              rateAmount: rate?.amount ?? null,
             }
           : entry,
       ),
@@ -127,7 +281,21 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
     const nextKey = Math.max(0, ...empresas.map((entry) => entry.key)) + 1
     setEmpresas((current) => [
       ...current,
-      { key: nextKey, companyId: '', paquetes: '' },
+      {
+        key: nextKey,
+        companyId: '',
+        companyName: '',
+        routingType: '',
+        routeTypeName: '',
+        routeTypeCode: '',
+        paquetes: '',
+        noEntregados: '',
+        routeRateId: '',
+        routeTypeId: '',
+        companyRateId: '',
+        rateAmount: null,
+        packageAmount: null,
+      },
     ])
   }
 
@@ -153,35 +321,45 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
 
     const companyRates = selectedCompanies.map((entry) => {
       const company = companies.find((item) => item.id === entry.companyId)
-      const routingType = company?.routingType
+      const routingType = company?.routingType ?? entry.routingType
       const packagesReceived = Number(entry.paquetes)
+      const packagesUndelivered = Number(entry.noEntregados)
       const common = {
         companyId: entry.companyId,
         routingType,
         packagesReceived: Number.isFinite(packagesReceived) && packagesReceived >= 0
           ? packagesReceived
           : 0,
-        packagesUndelivered: 0,
+        packagesUndelivered:
+          Number.isFinite(packagesUndelivered) && packagesUndelivered >= 0
+            ? packagesUndelivered
+            : 0,
       }
 
       if (routingType === 'ROUTE') {
-        const rate = rates.ROUTE.find((item) => item.id === entry.routeRateId)
+        const rate = resolveRouteRate(rates.ROUTE, entry)
+        const amount = rate?.amount ?? entry.rateAmount ?? null
         return {
           ...common,
-          rateAmount: rate?.amount ?? null,
-          routeRateAmount: rate?.amount ?? null,
-          routeRateId: rate?.id ?? null,
-          routeTypeId: rate?.routeTypeId ?? null,
+          rateAmount: amount,
+          routeRateAmount: amount,
+          routeRateId: rate?.id || entry.routeRateId || null,
+          routeTypeId: rate?.routeTypeId || entry.routeTypeId || null,
         }
       }
 
       if (routingType === 'PACKAGE') {
         const rate = getPackageRate(entry.companyId)
+        const amount = editing
+          ? entry.rateAmount ?? rate?.amount ?? null
+          : rate?.amount ?? entry.rateAmount ?? null
         return {
           ...common,
-          rateAmount: rate?.amount ?? null,
-          packageAmount: rate?.amount ?? null,
-          companyRateId: rate?.id ?? null,
+          rateAmount: amount,
+          packageAmount: amount,
+          companyRateId: editing
+            ? entry.companyRateId || rate?.id || null
+            : rate?.id ?? entry.companyRateId ?? null,
         }
       }
 
@@ -199,14 +377,27 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
     setSubmitting(true)
 
     try {
-      await onCreate({
+      const payload = {
         routeDate: form.fecha,
         destinationCity: form.city,
         vehicleKmStart,
         vehicleKmEnd,
         notes: form.observaciones.trim() || null,
         companies: companyRates,
-      })
+      }
+
+      if (editing) {
+        if (!route?.routeId) {
+          throw new Error('La ruta no tiene un identificador válido para editar.')
+        }
+        await onUpdate(
+          route.routeId,
+          route.routeCompanyId ?? route.id,
+          payload,
+        )
+      } else {
+        await onCreate(payload)
+      }
       onDone()
     } catch (err) {
       setSubmitError(err)
@@ -215,17 +406,42 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
     }
   }
 
+  const handleDeleteRoute = async () => {
+    if (!onDeleteRoute || !route?.routeId) return
+
+    if (
+      !window.confirm(
+        '¿Eliminar la ruta completa? También se quitarán todas las empresas asociadas.',
+      )
+    )
+      return
+
+    setSubmitError(null)
+    setDeleting(true)
+
+    try {
+      await onDeleteRoute(route)
+      onDone()
+    } catch (err) {
+      setSubmitError(err)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const busy = submitting || deleting
+
   return (
     <form id="route-form" onSubmit={handleSubmit} noValidate>
       <FormErrors
         errors={errors}
-        title="No se pudo guardar la ruta"
+        title={editing ? 'No se pudieron guardar los cambios' : 'No se pudo guardar la ruta'}
         description="Corregí los campos marcados para continuar."
       />
       {submitError && (
         <ErrorNotice
           error={submitError}
-          title="No se pudo guardar la ruta"
+          title={editing ? 'No se pudieron guardar los cambios' : 'No se pudo guardar la ruta'}
           onDismiss={() => setSubmitError(null)}
         />
       )}
@@ -344,97 +560,142 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
       </div>
 
       <div className="field" style={{ marginBottom: 16 }}>
-        <span className="field__label">Empresas involucradas</span>
+        <span className="field__label">
+          {editing ? 'Empresa asociada' : 'Empresas involucradas'}
+        </span>
         <div className="route-companies">
-          {empresas.map((entry, index) => (
-            <div className="route-company" key={entry.key}>
-              <div className="route-company__row">
-                <div className="field route-company__select">
-                  <select
-                    className="select"
-                    value={entry.companyId}
-                    onChange={(event) =>
-                      updateEmpresa(index, 'companyId', event.target.value)
-                    }
-                  >
-                    <option value="">
-                      {index === 0 ? 'Seleccionar empresa…' : 'Otra empresa…'}
-                    </option>
-                    {availableCompanies(index).map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.legalName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          {empresas.map((entry, index) => {
+            const company = companies.find(
+              (item) => item.id === entry.companyId,
+            )
+            const companyInList = Boolean(company)
+            const companyRoutingType = company?.routingType ?? entry.routingType
+            const packageRate = getPackageRate(entry.companyId)
+            const packageAmount = editing
+              ? entry.rateAmount ?? packageRate?.amount ?? null
+              : packageRate?.amount ?? entry.rateAmount ?? null
+            const routeRate = resolveRouteRate(rates.ROUTE, entry)
+            const selectedRouteRate =
+              rateSelectionValue(routeRate) ||
+              entry.routeTypeId ||
+              entry.routeRateId ||
+              ''
 
-                <div className="field route-company__packages">
-                  <input
-                    className="input"
-                    type="number"
-                    min="0"
-                    step="1"
-                    inputMode="numeric"
-                    value={entry.paquetes}
-                    onChange={(event) =>
-                      updateEmpresa(index, 'paquetes', event.target.value)
-                    }
-                    placeholder="Paquetes"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="icon-button route-company__remove"
-                  onClick={() => removeEmpresa(index)}
-                  aria-label="Eliminar empresa"
-                  disabled={empresas.length === 1}
-                >
-                  <Icon name="trash" size={15} />
-                </button>
-              </div>
-              {entry.companyId && (
-                <div className="field route-company__rate">
-                  <label
-                    className="field__label"
-                    htmlFor={`route-rate-${entry.key}`}
-                  >
-                    {companies.find((company) => company.id === entry.companyId)
-                      ?.routingType === 'ROUTE'
-                      ? 'Tarifa de ruta'
-                      : 'Tarifa de paquete'}
-                  </label>
-                  {companies.find((company) => company.id === entry.companyId)
-                    ?.routingType === 'ROUTE' ? (
+            return (
+              <div className="route-company" key={entry.key}>
+                <div className="route-company__row">
+                  <div className="field route-company__select">
                     <select
-                      id={`route-rate-${entry.key}`}
                       className="select"
-                      value={entry.routeRateId ?? ''}
+                      value={entry.companyId}
                       onChange={(event) =>
-                        updateEmpresa(index, 'routeRateId', event.target.value)
+                        updateEmpresa(index, 'companyId', event.target.value)
                       }
-                      disabled={ratesStatus !== 'ready'}
+                      disabled={editing}
+                      aria-label="Empresa"
                     >
-                      <option value="">Sin tarifa (opcional)</option>
-                      {rates.ROUTE.map((rate) => (
-                        <option key={rate.id} value={rate.id}>
-                          {rate.name} — {formatCurrency(rate.amount)}
+                      <option value="">
+                        {index === 0 ? 'Seleccionar empresa…' : 'Otra empresa…'}
+                      </option>
+                      {!companyInList && entry.companyId && (
+                        <option value={entry.companyId}>
+                          {entry.companyName || 'Empresa'}
+                        </option>
+                      )}
+                      {availableCompanies(index).map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.legalName}
                         </option>
                       ))}
                     </select>
-                  ) : (
-                    <p className="route-form__rate-value">
-                      {ratesStatus === 'ready' && getPackageRate(entry.companyId)
-                        ? formatCurrency(getPackageRate(entry.companyId).amount)
-                        : ratesStatus === 'loading'
-                          ? 'Cargando tarifa…'
-                          : 'Sin tarifa vigente'}
-                    </p>
-                  )}
+                  </div>
+
+                  <div className="field route-company__packages">
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      value={entry.paquetes}
+                      onChange={(event) =>
+                        updateEmpresa(index, 'paquetes', event.target.value)
+                      }
+                      placeholder="Recibidos"
+                      aria-label="Paquetes recibidos"
+                    />
+                  </div>
+
+                  <div className="field route-company__packages">
+                    <input
+                      className="input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      value={entry.noEntregados}
+                      onChange={(event) =>
+                        updateEmpresa(index, 'noEntregados', event.target.value)
+                      }
+                      placeholder="No entregados"
+                      aria-label="Paquetes no entregados"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="icon-button route-company__remove"
+                    onClick={() => removeEmpresa(index)}
+                    aria-label="Eliminar empresa"
+                    disabled={editing || empresas.length === 1}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
                 </div>
-              )}
-            </div>
-          ))}
+                {entry.companyId && (
+                  <div className="field route-company__rate">
+                    <label
+                      className="field__label"
+                      htmlFor={`route-rate-${entry.key}`}
+                    >
+                      {companyRoutingType === 'ROUTE'
+                        ? 'Tarifa de ruta'
+                        : 'Tarifa de paquete'}
+                    </label>
+                    {companyRoutingType === 'ROUTE' ? (
+                      <select
+                        id={`route-rate-${entry.key}`}
+                        className="select"
+                        value={selectedRouteRate}
+                        onChange={(event) =>
+                          updateRouteRate(index, event.target.value)
+                        }
+                        disabled={ratesStatus !== 'ready'}
+                      >
+                        <option value="">Sin tarifa (opcional)</option>
+                        {rates.ROUTE.map((rate) => (
+                          <option
+                            key={rateSelectionValue(rate)}
+                            value={rateSelectionValue(rate)}
+                          >
+                            {rate.name} — {formatCurrency(rate.amount)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="route-form__rate-value">
+                        {packageAmount != null
+                          ? formatCurrency(packageAmount)
+                          : ratesStatus === 'loading'
+                            ? 'Cargando tarifa…'
+                            : 'Sin tarifa vigente'}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
           {errors.companies && (
             <span className="field__error">
@@ -442,7 +703,7 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
               {errors.companies}
             </span>
           )}
-          {usedCompanyIds.length < companies.length && (
+          {!editing && usedCompanyIds.length < companies.length && (
             <button
               type="button"
               className="route-company__add"
@@ -470,17 +731,38 @@ function RouteForm({ onDone, onCreate, companies = [] }) {
       </div>
 
       <div className="modal__footer" style={{ margin: '4px -22px -22px' }}>
-        <button type="button" className="button button--ghost" onClick={onDone}>
+        {editing && onDeleteRoute && route?.routeId && (
+          <button
+            type="button"
+            className="button button--danger"
+            style={{ marginRight: 'auto' }}
+            onClick={handleDeleteRoute}
+            disabled={busy}
+          >
+            <Icon name="trash" size={15} />
+            {deleting ? 'Eliminando…' : 'Eliminar ruta completa'}
+          </button>
+        )}
+        <button
+          type="button"
+          className="button button--ghost"
+          onClick={onDone}
+          disabled={busy}
+        >
           Cancelar
         </button>
         <button
           type="submit"
           form="route-form"
           className="button button--primary"
-          disabled={submitting}
+          disabled={busy}
         >
           <Icon name="check" size={16} />
-          {submitting ? 'Guardando…' : 'Guardar ruta'}
+          {submitting
+            ? 'Guardando…'
+            : editing
+              ? 'Guardar cambios'
+              : 'Guardar ruta'}
         </button>
       </div>
     </form>

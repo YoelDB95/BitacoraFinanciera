@@ -8,11 +8,14 @@ function daysAgo(offset) {
 
 export const ROUTE_TYPES = [
   { label: 'PNU', aliases: ['pnu', 'rt-101'] },
-  { label: 'Ruta A', aliases: ['ruta a', 'ruta-a', 'ruta_a', 'rt-102', 'rt-107'] },
-  { label: 'Ruta B', aliases: ['ruta b', 'ruta-b', 'ruta_b', 'rt-103'] },
-  { label: 'Ruta C', aliases: ['ruta c', 'ruta-c', 'ruta_c', 'rt-104'] },
-  { label: 'Ruta D', aliases: ['ruta d', 'ruta-d', 'ruta_d', 'rt-105'] },
-  { label: 'Ruta E', aliases: ['ruta e', 'ruta-e', 'ruta_e', 'rt-106'] },
+  {
+    label: 'Ruta A',
+    aliases: ['a', 'ruta a', 'ruta-a', 'ruta_a', 'rt-102', 'rt-107'],
+  },
+  { label: 'Ruta B', aliases: ['b', 'ruta b', 'ruta-b', 'ruta_b', 'rt-103'] },
+  { label: 'Ruta C', aliases: ['c', 'ruta c', 'ruta-c', 'ruta_c', 'rt-104'] },
+  { label: 'Ruta D', aliases: ['d', 'ruta d', 'ruta-d', 'ruta_d', 'rt-105'] },
+  { label: 'Ruta E', aliases: ['e', 'ruta e', 'ruta-e', 'ruta_e', 'rt-106'] },
 ]
 
 export const ROUTE_OPTIONS = ROUTE_TYPES.map((type) => type.label)
@@ -267,39 +270,94 @@ export function filterByPeriod(items, range) {
   return items.filter((item) => item.fecha >= range.from && item.fecha <= range.to)
 }
 
-export function summarize(routes, companies = COMPANIES) {
+export function routeAmount(route) {
+  const billing = route?.billingAmount
+  if (billing != null && Number.isFinite(Number(billing))) {
+    return Number(billing)
+  }
+
+  const rate = route?.rateAmount
+  if (rate != null && Number.isFinite(Number(rate))) {
+    return Number(rate)
+  }
+
+  return null
+}
+
+function routeKey(route) {
+  return route?.routeId || route?.id || route?.routeCompanyId
+}
+
+export function summarize(routes = [], companies = COMPANIES) {
   const index = companies.reduce((acc, company) => {
     acc[company.id] = company
     return acc
   }, {})
-  return routes.reduce(
+  const seenRoutes = new Set()
+  const companyIds = new Set()
+
+  const totals = routes.reduce(
     (acc, route) => {
-      acc.km += routeKm(route)
-      acc.rutas += 1
-      for (const entry of route.empresas ?? []) {
-        const company = index[entry.companyId]
-        const paquetes = Number(entry.paquetes) || 0
-        acc.entregados += paquetes
-        acc.noEntregados += Number(entry.noEntregados) || 0
-        acc.monto += paquetes * (company?.tarifa ?? 0)
+      const key = routeKey(route)
+      if (key && !seenRoutes.has(key)) {
+        seenRoutes.add(key)
+        acc.km += routeKm(route)
+        acc.rutas += 1
       }
+
+      const amount = routeAmount(route)
+      const entries = route.empresas ?? []
+
+      if (amount != null) {
+        acc.monto += amount
+      } else {
+        for (const entry of entries) {
+          const paquetes = Number(entry.paquetes) || 0
+          acc.monto += paquetes * (index[entry.companyId]?.tarifa ?? 0)
+        }
+      }
+
+      for (const entry of entries) {
+        if (entry.companyId) companyIds.add(entry.companyId)
+        acc.entregados += Number(entry.paquetes) || 0
+        acc.noEntregados += Number(entry.noEntregados) || 0
+      }
+
       return acc
     },
     { km: 0, monto: 0, entregados: 0, noEntregados: 0, rutas: 0 },
   )
+
+  return { ...totals, empresas: companyIds.size }
 }
 
-function normalizeRouteType(code) {
-  const value = String(code ?? '').trim().toLowerCase()
-  const match = ROUTE_TYPES.find((type) => type.aliases.includes(value))
+function normalizeRouteType(value) {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  if (!normalized) return null
+
+  const match = ROUTE_TYPES.find(
+    (type) =>
+      type.aliases.includes(normalized) ||
+      type.label.toLowerCase() === normalized,
+  )
   return match ? match.label : null
+}
+
+export function classifyRouteType(routeOrEntry) {
+  const entry = routeOrEntry?.empresas?.[0] ?? routeOrEntry
+
+  return (
+    normalizeRouteType(entry?.routeTypeName) ??
+    normalizeRouteType(entry?.routeTypeCode) ??
+    normalizeRouteType(entry?.routeCode)
+  )
 }
 
 export function countRoutesByType(routes = [], types = ROUTE_TYPES) {
   const counts = new Map(types.map((type) => [type.label, 0]))
 
   for (const route of routes) {
-    const label = normalizeRouteType(route.routeCode)
+    const label = classifyRouteType(route)
     if (label && counts.has(label)) {
       counts.set(label, counts.get(label) + 1)
     }
@@ -311,30 +369,126 @@ export function countRoutesByType(routes = [], types = ROUTE_TYPES) {
   }))
 }
 
-export function summarizeByCompany(routes, companies = COMPANIES) {
+export function countRoutesByTypeForCompany(
+  routes = [],
+  companyId,
+  types = ROUTE_TYPES,
+  routingType = 'PACKAGE',
+) {
+  const counts = new Map(types.map((type) => [type.label, 0]))
+  const seenRoutes = new Set()
+  const targetType = String(routingType).toUpperCase()
+
+  // El tipo de ruta puede estar guardado en la fila de otra empresa de la
+  // misma ruta (por ejemplo, la empresa ROUTE que eligió la tarifa).
+  const routeTypes = new Map()
+  for (const route of routes) {
+    const key = routeKey(route)
+    if (!key || routeTypes.has(key)) continue
+
+    for (const entry of route.empresas ?? []) {
+      const label = classifyRouteType(entry)
+      if (label) {
+        routeTypes.set(key, label)
+        break
+      }
+    }
+  }
+
+  for (const route of routes) {
+    const key = routeKey(route)
+    if (key && seenRoutes.has(key)) continue
+
+    const entry = (route.empresas ?? []).find(
+      (item) => item.companyId === companyId,
+    )
+    if (!entry || String(entry.routingType).toUpperCase() !== targetType) {
+      continue
+    }
+
+    const label =
+      classifyRouteType(entry) ?? (key ? routeTypes.get(key) : null)
+    if (!label || !counts.has(label)) continue
+
+    if (key) seenRoutes.add(key)
+    counts.set(label, counts.get(label) + 1)
+  }
+
+  return types.map((type) => ({
+    label: type.label,
+    total: counts.get(type.label) ?? 0,
+  }))
+}
+
+export function routeCompanyCards(
+  routes = [],
+  companies = [],
+  routingType = 'ROUTE',
+) {
+  const targetType = String(routingType).toUpperCase()
+
+  return companies
+    .filter(
+      (company) => String(company.routingType).toUpperCase() === targetType,
+    )
+    .map((company) => {
+      const counts = countRoutesByTypeForCompany(
+        routes,
+        company.id,
+        ROUTE_TYPES,
+        targetType,
+      )
+      const total = counts.reduce((sum, item) => sum + item.total, 0)
+
+      return {
+        company,
+        data: counts.filter((item) => item.total > 0),
+        total,
+      }
+    })
+    .filter((row) => row.total > 0)
+    .sort((a, b) =>
+      (a.company.legalName ?? a.company.nombre ?? '').localeCompare(
+        b.company.legalName ?? b.company.nombre ?? '',
+      ),
+    )
+}
+
+export function summarizeByCompany(routes = [], companies = COMPANIES) {
   const index = companies.reduce((acc, company) => {
     acc[company.id] = company
     return acc
   }, {})
+
   return companies.map((company) => {
     const own = routes.filter((route) =>
       (route.empresas ?? []).some((entry) => entry.companyId === company.id),
     )
-    const stats = own.reduce(
-      (acc, route) => {
-        acc.km += routeKm(route)
-        acc.rutas += 1
-        const entry = (route.empresas ?? []).find(
-          (item) => item.companyId === company.id,
-        )
-        const paquetes = Number(entry?.paquetes) || 0
-        acc.entregados += paquetes
-        acc.noEntregados += Number(entry?.noEntregados) || 0
-        acc.monto += paquetes * (index[company.id]?.tarifa ?? 0)
-        return acc
-      },
-      { km: 0, monto: 0, entregados: 0, noEntregados: 0, rutas: 0 },
-    )
+    const seenRoutes = new Set()
+    const stats = { km: 0, monto: 0, entregados: 0, noEntregados: 0, rutas: 0 }
+
+    for (const route of own) {
+      const key = routeKey(route)
+      if (key && !seenRoutes.has(key)) {
+        seenRoutes.add(key)
+        stats.km += routeKm(route)
+        stats.rutas += 1
+      }
+
+      const amount = routeAmount(route)
+      for (const entry of route.empresas ?? []) {
+        if (entry.companyId !== company.id) continue
+
+        const paquetes = Number(entry.paquetes) || 0
+        stats.entregados += paquetes
+        stats.noEntregados += Number(entry.noEntregados) || 0
+        stats.monto +=
+          amount != null
+            ? amount
+            : paquetes * (index[company.id]?.tarifa ?? 0)
+      }
+    }
+
     return { company, ...stats }
   })
 }

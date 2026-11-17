@@ -360,24 +360,100 @@ export function toRoutePayload(route = {}) {
               entry.routeRateAmount == null
                 ? null
                 : Number(entry.routeRateAmount),
-            routeRateId: entry.routeRateId ?? null,
-            routeTypeId: entry.routeTypeId ?? null,
+            routeRateId: entry.routeRateId || null,
+            routeTypeId: entry.routeTypeId || null,
           }
         : {
             packageAmount:
               entry.packageAmount == null
                 ? null
                 : Number(entry.packageAmount),
-            companyRateId: entry.companyRateId ?? null,
+            companyRateId: entry.companyRateId || null,
+            routeTypeId: entry.routeTypeId || null,
           }),
     })),
   }
+}
+
+export function toUpdateRoutePayload(route = {}, routeId, routeCompanyId) {
+  const entry =
+    route.companies?.[0] ?? route.empresas?.[0] ?? route
+  const notes = String(route.notes ?? route.observaciones ?? '').trim()
+  const rateAmount =
+    entry.rateAmount == null ? null : Number(entry.rateAmount)
+
+  const payload = {
+    routeId: routeId ?? route.routeId ?? null,
+    routeCompanyId: routeCompanyId ?? route.routeCompanyId ?? route.id ?? null,
+    routeDate: route.routeDate ?? route.fecha ?? '',
+    destinationCity: String(
+      route.destinationCity ?? route.city ?? '',
+    ).trim(),
+    vehicleKmStart: Number(route.vehicleKmStart ?? route.kmInicial ?? 0) || 0,
+    vehicleKmEnd:
+      route.vehicleKmEnd == null && route.kmFinal == null
+        ? null
+        : Number(route.vehicleKmEnd ?? route.kmFinal),
+    notes: notes || null,
+    companyId: entry.companyId ?? '',
+    packagesReceived:
+      Number(entry.packagesReceived ?? entry.paquetes ?? 0) || 0,
+    packagesUndelivered:
+      Number(entry.packagesUndelivered ?? entry.noEntregados ?? 0) || 0,
+    rateAmount,
+  }
+
+  if (route.billingAmount != null) {
+    payload.billingAmount = Number(route.billingAmount)
+  }
+
+  if (String(entry.routingType).toUpperCase() === 'ROUTE') {
+    payload.routeRateAmount =
+      entry.routeRateAmount == null
+        ? rateAmount
+        : Number(entry.routeRateAmount)
+    payload.routeRateId = entry.routeRateId || null
+    payload.routeTypeId = entry.routeTypeId || null
+  } else {
+    payload.companyRateAmount =
+      entry.packageAmount == null
+        ? rateAmount
+        : Number(entry.packageAmount)
+    payload.companyRateId = entry.companyRateId || null
+    payload.routeTypeId = entry.routeTypeId || null
+  }
+
+  return payload
 }
 
 export async function createRoute(route) {
   return send('/routes', {
     method: 'POST',
     body: JSON.stringify(toRoutePayload(route)),
+  })
+}
+
+export async function updateRoute(routeId, routeCompanyId, route) {
+  return send(
+    `/routes/${encodeURIComponent(routeId)}/${encodeURIComponent(routeCompanyId)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(
+        toUpdateRoutePayload(route, routeId, routeCompanyId),
+      ),
+    },
+  )
+}
+
+export async function deleteRoute(routeId) {
+  return send(`/routes/${encodeURIComponent(routeId)}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function deleteCompanyRoute(routeCompanyId) {
+  return send(`/routes/companyRoute/${encodeURIComponent(routeCompanyId)}`, {
+    method: 'DELETE',
   })
 }
 
@@ -394,14 +470,18 @@ export async function getRoutes({ month, startDate, endDate, companyId } = {}) {
 
   return (Array.isArray(routes) ? routes : []).map((route) => {
     const id = route.route_company_id ?? route.routeCompanyId ?? route.id
+    const routeId = route.route_id ?? route.routeId ?? ''
     const companyName =
       route.legal_name ?? route.legalName ?? route.companyName ?? route.name ?? ''
 
     return {
       id,
+      routeId,
+      routeCompanyId: id,
       routeCode: route.route_code ?? route.routeCode ?? 'Ruta',
       fecha: route.route_date ?? route.routeDate ?? '',
       city: route.destination_city ?? route.destinationCity ?? '',
+      notes: route.notes ?? '',
       kmInicial: Number(route.vehicle_km_start ?? route.vehicleKmStart ?? 0),
       kmFinal: Number(
         route.coalesce ?? route.vehicle_km_end ?? route.vehicleKmEnd ?? 0,
@@ -410,6 +490,10 @@ export async function getRoutes({ month, startDate, endDate, companyId } = {}) {
         route.rate_amount == null && route.rateAmount == null
           ? null
           : Number(route.rate_amount ?? route.rateAmount),
+      billingAmount:
+        route.billing_amount == null && route.billingAmount == null
+          ? null
+          : Number(route.billing_amount ?? route.billingAmount),
       empresas: [
         {
           key: id,
@@ -426,6 +510,9 @@ export async function getRoutes({ month, startDate, endDate, companyId } = {}) {
           noEntregados: Number(
             route.packages_undelivered ?? route.packagesUndelivered ?? 0,
           ),
+          routeRateId: route.route_rate_id ?? route.routeRateId ?? '',
+          routeTypeId: route.route_type_id ?? route.routeTypeId ?? '',
+          companyRateId: route.company_rate_id ?? route.companyRateId ?? '',
         },
       ],
     }

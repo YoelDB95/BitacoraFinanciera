@@ -6,7 +6,13 @@ import ErrorState from '../components/ui/ErrorState.jsx'
 import RouteList from '../components/routes/RouteList.jsx'
 import RouteModal from '../components/work/RouteModal.jsx'
 import { useCompanies } from '../hooks/useCompanies.js'
-import { createRoute, getRoutes } from '../lib/api.js'
+import {
+  createRoute,
+  deleteCompanyRoute,
+  deleteRoute,
+  getRoutes,
+  updateRoute,
+} from '../lib/api.js'
 import { formatCount, formatMonth, toInputMonth } from '../lib/format.js'
 import { companyLabel, routeEntryLabel } from '../lib/routeDisplay.js'
 
@@ -28,12 +34,26 @@ function validateFilters(filters) {
   return filters.month ? '' : 'Selecciona un mes.'
 }
 
+function sortRoutesByDateDesc(routes = []) {
+  return [...routes].sort((a, b) => {
+    const dateOrder = String(b.fecha ?? '').localeCompare(String(a.fecha ?? ''))
+    if (dateOrder !== 0) return dateOrder
+
+    return String(b.routeCompanyId ?? b.id ?? '').localeCompare(
+      String(a.routeCompanyId ?? a.id ?? ''),
+    )
+  })
+}
+
 export default function Rutas() {
   const defaultFilters = useMemo(() => createDefaultFilters(), [])
   const [draft, setDraft] = useState(defaultFilters)
   const [filters, setFilters] = useState(defaultFilters)
   const [filterError, setFilterError] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingRoute, setEditingRoute] = useState(null)
+  const [deletingId, setDeletingId] = useState('')
+  const [actionError, setActionError] = useState(null)
   const [error, setError] = useState(null)
   const [routes, setRoutes] = useState([])
   const [routesStatus, setRoutesStatus] = useState('loading')
@@ -125,25 +145,25 @@ export default function Rutas() {
   }, [companies, routes, companyIndex])
 
   const visible = useMemo(() => {
-    return routes
-      .filter((route) => {
-        if (filters.month && route.fecha.slice(0, 7) !== filters.month) {
-          return false
-        }
+    const filtered = routes.filter((route) => {
+      if (filters.month && route.fecha.slice(0, 7) !== filters.month) {
+        return false
+      }
 
-        if (
-          filters.companyId &&
-          !(route.empresas ?? []).some(
-            (entry) =>
-              entry.companyId === filters.companyId ||
-              entry.companyName === companyLabel(companyIndex[filters.companyId]),
-          )
-        ) {
-          return false
-        }
-        return true
-      })
-      .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0))
+      if (
+        filters.companyId &&
+        !(route.empresas ?? []).some(
+          (entry) =>
+            entry.companyId === filters.companyId ||
+            entry.companyName === companyLabel(companyIndex[filters.companyId]),
+        )
+      ) {
+        return false
+      }
+      return true
+    })
+
+    return sortRoutesByDateDesc(filtered)
   }, [routes, filters, companyIndex])
 
   const isDefaultFilters = (value) =>
@@ -185,6 +205,67 @@ export default function Rutas() {
     await loadRoutes(filters)
   }
 
+  const handleUpdateRoute = async (routeId, routeCompanyId, route) => {
+    await updateRoute(routeId, routeCompanyId, route)
+    await loadRoutes(filters)
+  }
+
+  const handleEditRoute = (route) => {
+    setEditingRoute(route)
+    setModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setModalOpen(false)
+    setEditingRoute(null)
+  }
+
+  const handleNewRouteClick = () => {
+    setEditingRoute(null)
+    setModalOpen(true)
+  }
+
+  const handleDeleteCompanyRoute = async (route) => {
+    const routeCompanyId = route?.routeCompanyId ?? route?.id
+
+    if (!routeCompanyId) {
+      setActionError(
+        new Error('La asociación empresa-ruta no tiene un identificador válido.'),
+      )
+      return
+    }
+
+    const company = routeEntryLabel(route.empresas?.[0], companyIndex)
+
+    if (
+      !window.confirm(
+        `¿Quitar ${company} de esta ruta? La ruta y las demás empresas no se modifican.`,
+      )
+    )
+      return
+
+    setActionError(null)
+    setDeletingId(routeCompanyId)
+
+    try {
+      await deleteCompanyRoute(routeCompanyId)
+      await loadRoutes(filters)
+    } catch (err) {
+      setActionError(err)
+    } finally {
+      setDeletingId('')
+    }
+  }
+
+  const handleDeleteRoute = async (route) => {
+    if (!route?.routeId) {
+      throw new Error('La ruta no tiene un identificador válido para eliminar.')
+    }
+
+    await deleteRoute(route.routeId)
+    await loadRoutes(filters)
+  }
+
   const periodLabel = formatMonth(filters.month)
 
   const summary = [
@@ -210,7 +291,7 @@ export default function Rutas() {
         <button
           type="button"
           className="button button--primary"
-          onClick={() => setModalOpen(true)}
+          onClick={handleNewRouteClick}
         >
           <Icon name="plus" size={16} />
           Nueva ruta
@@ -223,6 +304,14 @@ export default function Rutas() {
           title="No se pudieron actualizar las rutas"
           onRetry={() => loadRoutes(filters)}
           onDismiss={() => setError(null)}
+        />
+      )}
+
+      {actionError && (
+        <ErrorNotice
+          error={actionError}
+          title="No se pudo completar la acción"
+          onDismiss={() => setActionError(null)}
         />
       )}
 
@@ -321,7 +410,13 @@ export default function Rutas() {
           onRetry={() => loadRoutes(filters)}
         />
       ) : visible.length > 0 ? (
-        <RouteList routes={visible} companyIndex={companyIndex} />
+        <RouteList
+          routes={visible}
+          companyIndex={companyIndex}
+          onEdit={handleEditRoute}
+          onDelete={handleDeleteCompanyRoute}
+          busyId={deletingId}
+        />
       ) : (
         <EmptyState
           icon={hasFilters ? 'search' : 'route'}
@@ -344,7 +439,7 @@ export default function Rutas() {
               <button
                 type="button"
                 className="button button--primary"
-                onClick={() => setModalOpen(true)}
+                onClick={handleNewRouteClick}
               >
                 <Icon name="plus" size={16} />
                 Nueva ruta
@@ -356,8 +451,11 @@ export default function Rutas() {
 
       <RouteModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleCloseModal}
         onCreate={handleNewRoute}
+        onUpdate={handleUpdateRoute}
+        onDeleteRoute={handleDeleteRoute}
+        route={editingRoute}
         companies={modalCompanies}
       />
     </>

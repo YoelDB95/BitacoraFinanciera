@@ -17,7 +17,8 @@ export default function RoutesChart({ data = [], total = 0 }) {
     )
   }
 
-  const max = Math.max(...data.map((item) => item.total), 1)
+  const visible = data.filter((item) => item.total > 0)
+  const max = Math.max(...visible.map((item) => item.total), 1)
 
   return (
     <div
@@ -25,7 +26,7 @@ export default function RoutesChart({ data = [], total = 0 }) {
       role="img"
       aria-label="Cantidad de rutas realizadas por tipo de ruta"
     >
-      {data.map((item) => (
+      {visible.map((item) => (
         <div className="bar-chart__row" key={item.label}>
           <span className="bar-chart__label">{item.label}</span>
           <div className="bar-chart__track">

@@ -233,6 +233,11 @@
   background: var(--surface-3);
 }
 
+.row-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .row-action--danger:hover {
   color: #fb7185;
   border-color: rgba(244, 63, 94, 0.4);

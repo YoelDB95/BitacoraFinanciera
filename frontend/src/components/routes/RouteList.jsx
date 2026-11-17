@@ -37,7 +37,38 @@ function RouteTypeBadge({ route }) {
   )
 }
 
-function RouteRow({ route, companyIndex, onDelete }) {
+function RouteActions({ route, company, onEdit, onDelete, busy }) {
+  if (!onEdit && !onDelete) return null
+
+  return (
+    <span className="row-actions">
+      {onEdit && (
+        <button
+          type="button"
+          className="row-action"
+          onClick={() => onEdit(route)}
+          aria-label={`Editar ruta de ${company}`}
+          disabled={busy}
+        >
+          <Icon name="edit" size={15} />
+        </button>
+      )}
+      {onDelete && (
+        <button
+          type="button"
+          className="row-action row-action--danger"
+          onClick={() => onDelete(route)}
+          aria-label={`Quitar ${company} de la ruta`}
+          disabled={busy}
+        >
+          <Icon name="trash" size={15} />
+        </button>
+      )}
+    </span>
+  )
+}
+
+function RouteRow({ route, companyIndex, onEdit, onDelete, busy }) {
   const company = routeCompanies(route, companyIndex)
   const packages = route.empresas?.[0]
 
@@ -75,25 +106,22 @@ function RouteRow({ route, companyIndex, onDelete }) {
       <td>
         <span className="badge routes-table__city">{route.city || '—'}</span>
       </td>
-      {onDelete && (
+      {(onEdit || onDelete) && (
         <td className="col-actions">
-          <span className="row-actions">
-            <button
-              type="button"
-              className="row-action row-action--danger"
-              onClick={() => onDelete(route.id)}
-              aria-label={`Eliminar ${route.routeCode ?? route.city ?? 'ruta'}`}
-            >
-              <Icon name="trash" size={15} />
-            </button>
-          </span>
+          <RouteActions
+            route={route}
+            company={company}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            busy={busy}
+          />
         </td>
       )}
     </tr>
   )
 }
 
-function RouteCard({ route, companyIndex, onDelete }) {
+function RouteCard({ route, companyIndex, onEdit, onDelete, busy }) {
   const company = routeCompanies(route, companyIndex)
   const packages = route.empresas?.[0]
 
@@ -136,25 +164,28 @@ function RouteCard({ route, companyIndex, onDelete }) {
           <dd>{route.rateAmount == null ? '—' : formatCurrency(route.rateAmount)}</dd>
         </div>
       </dl>
-      {onDelete && (
+      {(onEdit || onDelete) && (
         <div className="route-card__actions">
-          <span className="row-actions">
-            <button
-              type="button"
-              className="row-action row-action--danger"
-              onClick={() => onDelete(route.id)}
-              aria-label={`Eliminar ${route.routeCode ?? route.city ?? 'ruta'}`}
-            >
-              <Icon name="trash" size={14} />
-            </button>
-          </span>
+          <RouteActions
+            route={route}
+            company={company}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            busy={busy}
+          />
         </div>
       )}
     </article>
   )
 }
 
-export default function RouteList({ routes, companyIndex, onDelete }) {
+export default function RouteList({
+  routes,
+  companyIndex,
+  onEdit,
+  onDelete,
+  busyId = '',
+}) {
   return (
     <div className="card route-list">
       <div className="table-wrap routes-table-wrap">
@@ -169,16 +200,20 @@ export default function RouteList({ routes, companyIndex, onDelete }) {
               <th>No entregados</th>
               <th>Tarifa</th>
               <th>Ciudad</th>
-              {onDelete && <th style={{ textAlign: 'right' }}>Acciones</th>}
+              {(onEdit || onDelete) && (
+                <th style={{ textAlign: 'right' }}>Acciones</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {routes.map((route) => (
               <RouteRow
-                key={route.id}
+                key={route.routeCompanyId ?? route.id}
                 route={route}
                 companyIndex={companyIndex}
+                onEdit={onEdit}
                 onDelete={onDelete}
+                busy={busyId === (route.routeCompanyId ?? route.id)}
               />
             ))}
           </tbody>
@@ -188,10 +223,12 @@ export default function RouteList({ routes, companyIndex, onDelete }) {
       <div className="card-list route-cards">
         {routes.map((route) => (
           <RouteCard
-            key={route.id}
+            key={route.routeCompanyId ?? route.id}
             route={route}
             companyIndex={companyIndex}
+            onEdit={onEdit}
             onDelete={onDelete}
+            busy={busyId === (route.routeCompanyId ?? route.id)}
           />
         ))}
       </div>

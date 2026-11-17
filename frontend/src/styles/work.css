@@ -123,7 +123,7 @@
 
 .route-company__row {
   display: grid;
-  grid-template-columns: 1fr 140px 36px;
+  grid-template-columns: 1fr 120px 120px 36px;
   gap: 10px;
   align-items: start;
 }
@@ -442,6 +442,24 @@
   .company-card__stats {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* ---------- Company routes cards ---------- */
+.company-routes-card {
+  gap: 14px;
+}
+
+.company-routes-card .bar-chart {
+  gap: 10px;
+}
+
+.company-routes-card .bar-chart__row {
+  grid-template-columns: minmax(64px, 92px) 1fr auto;
+}
+
+.company-routes-card .bar-chart__label,
+.company-routes-card .bar-chart__value {
+  font-size: 0.78rem;
 }
 
 /* ---------- Routes by month chart ---------- */
