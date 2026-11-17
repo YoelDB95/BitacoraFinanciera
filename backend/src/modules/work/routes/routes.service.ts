@@ -137,9 +137,9 @@ const modifyRoute = async (route: UpdateRouteInput) => {
 }
 
 const deleteRoute = async (routeCompanyId: string) => {
-  if (routesRepository.routeHasInvoices(routeCompanyId)) {
+  /*if (routesRepository.routeHasInvoices(routeCompanyId)) {
     return await routesRepository.deleteRoute(routeCompanyId)
-  }
+  }*/
 }
 
 const deleteCompanyRoute = async (routeCompanyId: string) => {

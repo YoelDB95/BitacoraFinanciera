@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "dev": "node --env-file=.env --watch --import=tsx index.ts",
     "test": "vitest",
     "test:run": "vitest run",
