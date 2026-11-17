@@ -14,7 +14,7 @@ const createRoute = async (req: Request, res: Response): Promise<Response> => {
     return res.status(201).json(response)
   } catch(e) {
     console.error(e)
-    return res.status(500).json({error: 'error'})
+    return res.status(500).json({error: e})
   }
 }
 
@@ -25,11 +25,47 @@ const getRoutes = async (req: Request, res: Response): Promise<Response> => {
 		return res.status(200).json(routes);
   } catch(e) {
 		console.log(e);
-		return res.status(500).json({error: 'error'})
+		return res.status(500).json({error: e})
 	}
+}
+
+const modifyRoute = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const route = { ...req.params, ...req.body }
+    const response = await routesService.modifyRoute(route)
+    return res.status(200).json(response)
+  } catch(e) {
+    console.error(e)
+    return res.status(500).json({error: e})
+  }
+}
+
+const deleteRoute = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const routeCompanyId = req.params.id as string
+    const response = await routesService.deleteRoute(routeCompanyId)
+    return res.status(200).json(response)
+  } catch(e) {
+    console.error(e)
+    return res.status(500).json({error: e})
+  }
+}
+
+const deleteCompanyRoute = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const companyRouteId = req.params.id as string
+    const response = await routesService.deleteCompanyRoute(companyRouteId)
+    return res.status(200).json(response)
+  } catch(e) {
+    console.error(e)
+    return res.status(500).json({error: e})
+  }
 }
 
 export default {
     getRoutes,
-    createRoute
+    createRoute,
+    modifyRoute,
+    deleteRoute,
+    deleteCompanyRoute
 }

@@ -3,7 +3,7 @@
 */
 
 import { db } from "../../../prisma/db.js";
-import { CompanyRouteWithoutRouteID, FilterRoutes, Route } from "./routes.types.js";
+import { CompanyRouteWithoutRouteID, FilterRoutes, Route, UpdateRouteInput } from "./routes.types.js";
 
 const getRouteRates = async () => {
   const runtime = db.runtime();
@@ -39,6 +39,7 @@ const getRoutes = async (filters: FilterRoutes) => {
   if (filters.month) {
     plan = db.raw.sql`
       SELECT rc.id AS route_company_id,
+        rr.id AS route_id,
         rc.company_id AS company_id,
         destination_city,
         route_date,
@@ -61,6 +62,7 @@ const getRoutes = async (filters: FilterRoutes) => {
     `
       .returnsRow({
         route_company_id: 'pg/uuid@1',
+        route_id: 'pg/uuid@1',
         company_id: 'pg/uuid@1',
         destination_city: 'pg/varchar@1',
         route_date: 'pg/date-string@1',
@@ -83,7 +85,13 @@ const getRoutes = async (filters: FilterRoutes) => {
 
     plan = db.raw.sql`
       SELECT rc.id AS route_company_id,
+        rr.id AS route_id,
         rc.company_id AS company_id,
+        rr.notes,
+        rc.route_rate_id,
+        rc.route_type_id,
+        rc.company_rate_id,
+        rc.billing_amount,
         destination_city,
         route_date,
         vehicle_km_start,
@@ -104,9 +112,15 @@ const getRoutes = async (filters: FilterRoutes) => {
     `
       .returnsRow({
         route_company_id: 'pg/uuid@1',
+        route_id: 'pg/uuid@1',
         company_id: 'pg/uuid@1',
         destination_city: 'pg/varchar@1',
         route_date: 'pg/date-string@1',
+        notes: 'pg/varchar@1',
+        route_rate_id: 'pg/uuid@1',
+        route_type_id: 'pg/uuid@1',
+        company_rate_id: 'pg/uuid@1',
+        billing_amount: 'pg/numeric@1',
         vehicle_km_start: 'pg/numeric@1',
         vehicle_km_end: 'pg/numeric@1',
         packages_received: 'pg/numeric@1',
@@ -124,37 +138,6 @@ const getRoutes = async (filters: FilterRoutes) => {
 }
 
 const createRouteWithCompanies = async (route: Route, companyRoute:CompanyRouteWithoutRouteID[]) => {
-  console.log('routes in repository: ', route);
-  console.log('companyRoute in repository: ', companyRoute);
-  /**
-    routes in repository:  {
-      destinationCity: 'Azul',
-      notes: null,
-      routeDate: '2026-11-04',
-      vehicleKmEnd: 2,
-      vehicleKmStart: 1
-    }
-
-    companyRoute in repository:  [
-      {
-        companyId: 'aa51cdbd-d17b-4a84-b3ce-35fb604236a6',
-        packagesReceived: 2,
-        packagesUndelivered: 0,
-        rateAmount: undefined,
-        routeRateAmount: undefined,
-        routeRateId: undefined,
-        routeTypeId: undefined
-      },
-      {
-        companyId: '5ff59e50-09a4-4c10-8c15-9c4a4757bab5',
-        packagesReceived: 1,
-        packagesUndelivered: 0,
-        rateAmount: undefined,
-        companyRateAmount: 1840,
-        companyRateId: '2a97efdc-a35b-4279-9854-3ac6e48aa622'
-      }
-    ]
-  */
   return db.transaction(async (tx) => {
     const newRoute = await tx.orm.public.Routes.create({
       destinationCity: route.destinationCity,
@@ -201,4 +184,44 @@ const getTypeRoute = (nameCode: string) => {
   .first()
 }
 
-export default { getRouteRates, getRoutes, getTypeRoute, createRouteWithCompanies }
+const updateRouteWithCompanies = async (routeId: string, companyRouteID: string, companyRouteData: Partial<UpdateRouteInput>) => {
+  return db.transaction(async (tx) => {
+    const updatedRoute = await tx.orm.public.Routes
+      .where((route) => route.id.eq(routeId))  
+      .update({      
+        destinationCity: companyRouteData.destinationCity,
+        notes: companyRouteData.notes ?? null,
+        routeDate: companyRouteData.routeDate,
+        userId: companyRouteData.userId ?? null,
+        vehicleKmEnd: companyRouteData.vehicleKmEnd == null ? null : String(companyRouteData.vehicleKmEnd),
+        vehicleKmStart: String(companyRouteData.vehicleKmStart),
+      })
+
+    const updatedCompanyRoute = await tx.orm.public.RouteCompanies
+      .where((routeCompany) => routeCompany.id.eq(companyRouteID))    
+      .update({      
+        billingAmount: companyRouteData.billingAmount == null ? null : String(companyRouteData.billingAmount),
+        companyId: companyRouteData.companyId,
+        companyRateAmount: companyRouteData.companyRateAmount == null ? null : String(companyRouteData.companyRateAmount),
+        companyRateId: companyRouteData.companyRateId ?? null,
+        notes: companyRouteData.notes ?? null,
+        packagesReceived: companyRouteData.packagesReceived ?? null,
+        packagesUndelivered: companyRouteData.packagesUndelivered ?? null,
+        rateAmount: companyRouteData.rateAmount == null ? null : String(companyRouteData.rateAmount),
+        routeId: companyRouteData.routeId ?? undefined,
+        routeRateAmount: companyRouteData.routeRateAmount == null ? null : String(companyRouteData.routeRateAmount),
+        routeRateId: companyRouteData.routeRateId ?? null,
+        routeTypeId: companyRouteData.routeTypeId ?? null
+    })  
+
+    return { updatedRoute, updatedCompanyRoute }
+  })
+}
+
+const deleteRoute = async (routeId: string) => {}
+
+const deleteCompanyRoute = async (routeCompanyId: string) => {}
+
+const routeHasInvoices = async (routeCompanyId: string) => {}
+
+export default { getRouteRates, getRoutes, getTypeRoute, createRouteWithCompanies, updateRouteWithCompanies, deleteRoute, deleteCompanyRoute, routeHasInvoices }

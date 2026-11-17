@@ -2,7 +2,7 @@
         Contiene las reglas de negocio y coordina operaciones entre entidades.
 */
 
-import { CompanyRouteWithoutRouteID, CreateRouteInput, FilterRoutes  } from './routes.types'
+import { CompanyRouteWithoutRouteID, CreateRouteInput, FilterRoutes, UpdateRouteInput  } from './routes.types'
 import routesRepository from "./routes.repository"
 
 const getRoutes = (filters: FilterRoutes) => {
@@ -43,39 +43,6 @@ const getRoutes = (filters: FilterRoutes) => {
 }
 
 const createRoute = async (route: CreateRouteInput) => {
-  console.log('route in service: ', route);
-	
-  /**
-    route in service:  {
-      routeDate: '2026-11-04',
-      destinationCity: 'Azul',
-      vehicleKmStart: 1,
-      vehicleKmEnd: 2,
-      notes: null,
-      companies: [
-        {
-          companyId: 'aa51cdbd-d17b-4a84-b3ce-35fb604236a6',
-          packagesReceived: 2,
-          packagesUndelivered: 0,
-          routingType: 'ROUTE',
-          rateAmount: 121000,
-          routeRateAmount: 121000,
-          routeRateId: '41836834-5154-491d-af54-353c9e316289',
-          routeTypeId: 'f61e9e7f-97d4-4ba8-b47a-1c26f7450312'
-        },
-        {
-          companyId: '5ff59e50-09a4-4c10-8c15-9c4a4757bab5',
-          packagesReceived: 1,
-          packagesUndelivered: 0,
-          routingType: 'PACKAGE',
-          rateAmount: 1840,
-          packageAmount: 1840,
-          companyRateId: '2a97efdc-a35b-4279-9854-3ac6e48aa622'
-        }
-      ]
-    }
-  */
-  
   if (
     !route.routeDate ||
     !Number.isFinite(route.vehicleKmStart) ||
@@ -93,6 +60,8 @@ const createRoute = async (route: CreateRouteInput) => {
   )
     throw new Error('Los kilómetros finales deben ser válidos y no menores que los iniciales');
 
+  console.log('Creando ruta con los siguientes datos:', route)
+  
   let { companies } = route
   
   companies.forEach(company => {
@@ -113,7 +82,6 @@ const createRoute = async (route: CreateRouteInput) => {
   for (const company of companies) {
     let newCompany = {} as CompanyRouteWithoutRouteID
 		if (company.routingType === 'ROUTE') {
-      //armar newRoute para ROUTE
       newCompany = {
 	      companyId: company.companyId,
 	      packagesReceived: company.packagesReceived,
@@ -125,7 +93,6 @@ const createRoute = async (route: CreateRouteInput) => {
       }
     }
     else {
-      //armar newRoute para PACKAGE
       newCompany = {
 	      companyId: company.companyId,
 	      packagesReceived: company.packagesReceived,
@@ -133,6 +100,7 @@ const createRoute = async (route: CreateRouteInput) => {
 	      rateAmount: company.packageAmount,
 	      companyRateAmount: company.packageAmount,
         companyRateId: company.companyRateId,
+        routeTypeId: company.routeTypeId ?? null,
       }
     }
 
@@ -142,7 +110,46 @@ const createRoute = async (route: CreateRouteInput) => {
   return routesRepository.createRouteWithCompanies(newRoute, newCompanyRoutes)
 }
 
+const modifyRoute = async (route: UpdateRouteInput) => {
+  if (
+    !route.routeDate ||
+    !Number.isFinite(route.vehicleKmStart) ||
+    route.vehicleKmStart < 0 ||
+    !route.destinationCity
+  )
+    throw new Error('Los datos de la ruta son inválidos');
+
+  if (
+    route.vehicleKmEnd != null &&
+    (!Number.isFinite(route.vehicleKmEnd) ||
+      route.vehicleKmEnd < route.vehicleKmStart)
+  )
+    throw new Error('Los kilómetros finales deben ser válidos y no menores que los iniciales');
+
+  if (!route.routeId || !route.routeCompanyId) {
+    throw new Error('Se requiere routeId y routeCompanyId para modificar la ruta')
+  }
+
+  const { routeCompanyId, routeId, ...routeData } = route
+
+  const updatedRoute = await routesRepository.updateRouteWithCompanies(routeId, routeCompanyId, routeData)
+  return updatedRoute
+}
+
+const deleteRoute = async (routeCompanyId: string) => {
+  if (routesRepository.routeHasInvoices(routeCompanyId)) {
+    return await routesRepository.deleteRoute(routeCompanyId)
+  }
+}
+
+const deleteCompanyRoute = async (routeCompanyId: string) => {
+  return await routesRepository.deleteCompanyRoute(routeCompanyId)
+}
+
 export default {
   getRoutes,
-  createRoute
+  createRoute,
+  modifyRoute,
+  deleteRoute,
+  deleteCompanyRoute
 }

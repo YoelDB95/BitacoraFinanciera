@@ -49,7 +49,7 @@ export interface CompanyRoute {
 	packagesReceived?: number | null,
 	packagesUndelivered?: number | null,
 	rateAmount?: number | null,
-	routeId: string,
+	routeId: string | null,
 	routeRateAmount?: number | null,
 	routeRateId?: string | null,
 	routeTypeId?: string | null
@@ -62,4 +62,8 @@ export interface FilterRoutes {
 	endDate?: string;
 	month?: string;
 	companyId?: string | null;
+}
+
+export interface UpdateRouteInput extends Route, CompanyRoute {
+	routeCompanyId?: string;
 }
