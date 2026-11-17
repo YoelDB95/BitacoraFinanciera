@@ -2,10 +2,10 @@
 Recibe la petición HTTP, extrae los datos y devuelve la respuesta.
 */
 
-import companiesService from './companies.service';
+import companiesService from './companies.service.js';
 import { type Request, type Response } from 'express';
-import {toIso, activeRateAmount} from '../../../lib/utils'
-import type { CreateCompanyInput, RoutingType } from './companies.types';
+import {toIso, activeRateAmount} from '../../../lib/utils.js'
+import type { CreateCompanyInput, RoutingType } from './companies.types.js';
 
 
 const getCompanies = async (req: Request, res: Response): Promise<Response> => {

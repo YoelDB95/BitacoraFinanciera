@@ -5,8 +5,8 @@
   "type": "module",
   "packageManager": "pnpm@12.6.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/run-vite.mjs dev",
+    "build": "node scripts/run-vite.mjs build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest",

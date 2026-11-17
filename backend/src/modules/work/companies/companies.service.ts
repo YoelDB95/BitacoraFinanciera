@@ -3,10 +3,10 @@
         Contiene las reglas de negocio y coordina operaciones entre entidades.
 */
 
-import companiesRepository from './companies.repository'
-import { toIso } from '../../../lib/utils';
-import { CreateCompanyInput, RoutingType } from './companies.types';
-import routesRepository from '../routes/routes.repository';
+import companiesRepository from './companies.repository.js'
+import { toIso } from '../../../lib/utils.js';
+import { CreateCompanyInput, RoutingType } from './companies.types.js';
+import routesRepository from '../routes/routes.repository.js';
 
 const createCompany = async (body: CreateCompanyInput) => {
   const company = await companiesRepository.createCompany(body);

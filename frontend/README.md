@@ -14,3 +14,24 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the Oxlint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+
+## URL de la API por entorno
+
+Los comandos toman la URL base de la API desde variables globales y la exponen a Vite como `VITE_API_URL`:
+
+| Comando | Variable global |
+| --- | --- |
+| `pnpm run dev` | `VITE_API_URL_DEV` |
+| `pnpm run build` | `VITE_API_URL_PROD` |
+
+Ejemplo en PowerShell:
+
+```powershell
+$env:VITE_API_URL_DEV = "http://localhost:3000/api"
+pnpm run dev
+
+$env:VITE_API_URL_PROD = "https://api.midominio.com/api"
+pnpm run build
+```
+
+Si la variable correspondiente no está definida, el comando falla con un mensaje indicando cuál falta.

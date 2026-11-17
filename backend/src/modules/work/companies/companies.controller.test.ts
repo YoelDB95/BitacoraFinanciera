@@ -10,7 +10,7 @@ const { serviceMock } = vi.hoisted(() => ({
 
 vi.mock('./companies.service', () => ({ default: serviceMock }))
 
-import companiesController from './companies.controller'
+import companiesController from './companies.controller.js'
 
 const createRes = () => {
   const res: any = {}

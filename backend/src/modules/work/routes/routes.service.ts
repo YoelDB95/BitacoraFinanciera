@@ -2,8 +2,8 @@
         Contiene las reglas de negocio y coordina operaciones entre entidades.
 */
 
-import { CompanyRouteWithoutRouteID, CreateRouteInput, FilterRoutes, UpdateRouteInput  } from './routes.types'
-import routesRepository from "./routes.repository"
+import { CompanyRouteWithoutRouteID, CreateRouteInput, FilterRoutes, UpdateRouteInput  } from './routes.types.js'
+import routesRepository from "./routes.repository.js"
 
 const getRoutes = (filters: FilterRoutes) => {
   const hasMonth = Boolean(filters.month)

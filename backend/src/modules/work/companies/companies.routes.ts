@@ -3,7 +3,7 @@
 */
 
 import { Router } from 'express';
-import companieController from './companies.controller';
+import companieController from './companies.controller.js';
 
 const router = Router()
 

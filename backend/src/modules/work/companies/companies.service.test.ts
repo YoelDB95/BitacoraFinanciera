@@ -13,7 +13,7 @@ const { repositoryMock, routesRepositoryMock } = vi.hoisted(() => ({
 vi.mock('./companies.repository', () => ({ default: repositoryMock }))
 vi.mock('../routes/routes.repository', () => ({ default: routesRepositoryMock }))
 
-import companiesService from './companies.service'
+import companiesService from './companies.service.js'
 
 describe('companies.service', () => {
   beforeEach(() => vi.clearAllMocks())

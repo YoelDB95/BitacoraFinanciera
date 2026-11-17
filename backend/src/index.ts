@@ -1,7 +1,7 @@
 import express from 'express';
 import "temporal-polyfill/full/global";
-import companiesRouter from './modules/work/companies/companies.routes';
-import routesRouter from './modules/work/routes/routes.routes'
+import companiesRouter from './modules/work/companies/companies.routes.js';
+import routesRouter from './modules/work/routes/routes.routes.js'
 
 const app = express();
 
