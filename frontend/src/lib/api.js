@@ -108,10 +108,16 @@ async function send(path = '', options = {}) {
   const method = String(options.method ?? 'GET').toUpperCase()
   let response
 
+  const headers = {
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...options.headers,
+  }
+
   try {
     response = await fetch(endpoint, {
-      headers: { 'Content-Type': 'application/json' },
       ...options,
+      method,
+      headers,
     })
   } catch (cause) {
     if (isAbortError(cause)) {

@@ -422,6 +422,38 @@ describe('route mutations', () => {
   })
 })
 
+describe('request headers', () => {
+  it('does not send Content-Type on GET requests without a body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([]))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getRoutes({ month: '2026-11' })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/routes?month=2026-11'),
+      expect.objectContaining({
+        method: 'GET',
+        headers: {},
+      }),
+    )
+  })
+
+  it('sends Content-Type on requests with a body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ updated: true }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await updateRoute('route-1', 'route-company-1', {})
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/routes/route-1/route-company-1'),
+      expect.objectContaining({
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  })
+})
+
 function responseHeaders(values = {}) {
   return {
     get: (name) => values[String(name).toLowerCase()] ?? '',
