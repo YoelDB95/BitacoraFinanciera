@@ -1,8 +1,9 @@
 import express from 'express';
 import "temporal-polyfill/full/global";
+import cors from 'cors'
 import companiesRouter from './modules/work/companies/companies.routes.js';
 import routesRouter from './modules/work/routes/routes.routes.js'
-import cors from 'cors'
+import loginRouter from './modules/work/login/login.routes.js'
 
 const corsOptions = {
   origin: [
@@ -19,6 +20,7 @@ const app = express();
 app.use(cors(corsOptions))
 app.use(express.json());
 
+app.use('api/login', loginRouter)
 app.use('/api/companies', companiesRouter);
 app.use('/api/routes', routesRouter)
 
