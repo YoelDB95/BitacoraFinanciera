@@ -285,6 +285,28 @@
   color: #cbd5f5;
 }
 
+.topbar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.topbar__user-name {
+  max-width: 160px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar__logout {
+  width: 34px;
+  height: 34px;
+}
+
 .menu-toggle {
   display: none;
 }
@@ -368,6 +390,10 @@
 @media (max-width: 640px) {
   .topbar {
     padding: 0 16px;
+  }
+
+  .topbar__user-name {
+    display: none;
   }
 
   .content {

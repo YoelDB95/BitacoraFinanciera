@@ -5,11 +5,20 @@ import Transactions from './pages/Transactions.jsx'
 import Resumen from './pages/Resumen.jsx'
 import Empresa from './pages/Empresa.jsx'
 import Rutas from './pages/Rutas.jsx'
+import Login from './pages/Login.jsx'
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx'
 
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route path="/login" element={<Login />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="trabajo">
           <Route index element={<Navigate to="/trabajo/resumen" replace />} />

@@ -5,12 +5,25 @@ import ErrorCenter from '../ui/ErrorCenter.jsx'
 import ErrorBoundary from '../ui/ErrorBoundary.jsx'
 import { NAV_ITEMS } from '../../lib/constants.js'
 import { useTransactions } from '../../hooks/useTransactions.js'
+import { useAuth } from '../../hooks/useAuth.js'
 import { formatCompact } from '../../lib/format.js'
+
+function getInitials(name) {
+  const parts = String(name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  if (parts.length === 0) return 'US'
+  return `${parts[0][0]}${parts[1]?.[0] ?? ''}`.toUpperCase()
+}
 
 export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { transactions, summary } = useTransactions()
+  const { user, logout } = useAuth()
   const { pathname } = useLocation()
+
+  const displayName = user?.name || user?.username || 'Usuario'
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -135,9 +148,23 @@ const isMatch = (item) =>
           <button type="button" className="icon-button" aria-label="Notificaciones">
             <Icon name="chart" size={18} />
           </button>
-          <span className="topbar__avatar" title="Perfil">
-            YR
-          </span>
+          <div className="topbar__user">
+            <span className="topbar__avatar" title={displayName}>
+              {getInitials(displayName)}
+            </span>
+            <span className="topbar__user-name" title={displayName}>
+              {displayName}
+            </span>
+            <button
+              type="button"
+              className="icon-button topbar__logout"
+              onClick={logout}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <Icon name="logout" size={17} />
+            </button>
+          </div>
         </header>
 
         <main className="content">

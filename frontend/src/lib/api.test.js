@@ -5,14 +5,19 @@ import {
   getCompanies,
   getRates,
   getRoutes,
+  login,
+  setUnauthorizedHandler,
   toRoutePayload,
   toUpdateRoutePayload,
   updateRoute,
 } from './api.js'
+import { saveSession } from './authStorage.js'
 import { ApiError, isApiError } from './errors.js'
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  setUnauthorizedHandler(null)
+  localStorage.clear()
 })
 
 describe('route API payload', () => {
@@ -451,6 +456,100 @@ describe('request headers', () => {
         headers: { 'Content-Type': 'application/json' },
       }),
     )
+  })
+})
+
+describe('authentication API', () => {
+  it('sends username and password to the login endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        token: 'jwt-1',
+        user: { id: 'usr-1', username: 'yoel', name: 'Yoel' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      login({ username: 'yoel', password: 'secreto' }),
+    ).resolves.toMatchObject({
+      token: 'jwt-1',
+      user: { username: 'yoel', name: 'Yoel' },
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/auth/login'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'yoel', password: 'secreto' }),
+      }),
+    )
+  })
+
+  it('attaches the bearer token to authenticated requests', async () => {
+    saveSession({ token: 'jwt-2', user: { username: 'yoel' } })
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([]))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getCompanies()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/companies'),
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer jwt-2' },
+      }),
+    )
+  })
+
+  it('does not send the bearer token to the login endpoint', async () => {
+    saveSession({ token: 'jwt-old', user: { username: 'yoel' } })
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ token: 'jwt-new', user: { username: 'yoel' } }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await login({ username: 'yoel', password: 'secreto' })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/auth/login'),
+      expect.objectContaining({
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  })
+
+  it('clears the session and notifies on a 401 from a protected endpoint', async () => {
+    saveSession({ token: 'jwt-expired', user: { username: 'yoel' } })
+    const handler = vi.fn()
+    setUnauthorizedHandler(handler)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ message: 'Token expirado' }, { status: 401 })),
+    )
+
+    await expect(getCompanies()).rejects.toMatchObject({ status: 401 })
+
+    expect(localStorage.getItem('bitacora.auth.v1')).toBeNull()
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the session when login returns 401', async () => {
+    saveSession({ token: 'jwt-old', user: { username: 'yoel' } })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          { code: 'INVALID_CREDENTIALS', message: 'Credenciales incorrectas' },
+          { status: 401 },
+        ),
+      ),
+    )
+
+    await expect(
+      login({ username: 'yoel', password: 'mala' }),
+    ).rejects.toMatchObject({ status: 401 })
+
+    expect(localStorage.getItem('bitacora.auth.v1')).not.toBeNull()
   })
 })
 

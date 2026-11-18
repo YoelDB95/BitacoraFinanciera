@@ -1,0 +1,169 @@
+import { useState } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import Icon from '../components/ui/Icon.jsx'
+import ErrorNotice from '../components/ui/ErrorNotice.jsx'
+import FormErrors from '../components/ui/FormErrors.jsx'
+import { useAuth } from '../hooks/useAuth.js'
+
+function validate(values) {
+  const errors = {}
+
+  if (!String(values.username ?? '').trim()) {
+    errors.username = 'Ingresá tu usuario.'
+  }
+  if (!String(values.password ?? '')) {
+    errors.password = 'Ingresá tu contraseña.'
+  }
+
+  return errors
+}
+
+export default function Login() {
+  const { isAuthenticated, login } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from || '/'
+
+  const [values, setValues] = useState({ username: '', password: '' })
+  const [errors, setErrors] = useState({})
+  const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  if (isAuthenticated) return <Navigate to={from} replace />
+
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setValues((current) => ({ ...current, [name]: value }))
+    setErrors((current) => ({ ...current, [name]: undefined }))
+    setError(null)
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    const nextErrors = validate(values)
+    setErrors(nextErrors)
+    setError(null)
+    if (Object.keys(nextErrors).length > 0) return
+
+    setSubmitting(true)
+    try {
+      await login(values)
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const invalidCredentials =
+    error?.status === 401 || error?.code === 'INVALID_CREDENTIALS'
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card card">
+        <div className="auth-brand">
+          <span className="auth-brand__logo">
+            <Icon name="wallet" size={22} />
+          </span>
+          <span>
+            <span className="auth-brand__title">Bitácora</span>
+            <span className="auth-brand__subtitle">Financiera</span>
+          </span>
+        </div>
+
+        <header className="auth-header">
+          <h1>Iniciá sesión</h1>
+          <p>Ingresá tus credenciales para acceder a tu información.</p>
+        </header>
+
+        <FormErrors
+          errors={errors}
+          title="Revisá los datos del formulario"
+          description="Completá los campos obligatorios para continuar."
+          onDismiss={() => setErrors({})}
+        />
+
+        {error ? (
+          <ErrorNotice
+            error={error}
+            title="No se pudo iniciar sesión"
+            hint={
+              invalidCredentials
+                ? 'Revisá el usuario y la contraseña e intentá de nuevo.'
+                : undefined
+            }
+            details={false}
+            compact
+            onDismiss={() => setError(null)}
+          />
+        ) : null}
+
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          <div className="field">
+            <label className="field__label" htmlFor="login-username">
+              Usuario <span>*</span>
+            </label>
+            <input
+              id="login-username"
+              name="username"
+              className="input"
+              type="text"
+              autoComplete="username"
+              placeholder="Tu usuario"
+              value={values.username}
+              onChange={handleChange}
+              aria-invalid={Boolean(errors.username)}
+              aria-describedby={errors.username ? 'login-username-error' : undefined}
+              autoFocus
+            />
+            {errors.username ? (
+              <span id="login-username-error" className="field__error">
+                <Icon name="alert" size={12} />
+                {errors.username}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor="login-password">
+              Contraseña <span>*</span>
+            </label>
+            <input
+              id="login-password"
+              name="password"
+              className="input"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Tu contraseña"
+              value={values.password}
+              onChange={handleChange}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? 'login-password-error' : undefined}
+            />
+            {errors.password ? (
+              <span id="login-password-error" className="field__error">
+                <Icon name="alert" size={12} />
+                {errors.password}
+              </span>
+            ) : null}
+          </div>
+
+          <button
+            type="submit"
+            className="button button--primary button--block auth-submit"
+            disabled={submitting}
+          >
+            <Icon name={submitting ? 'refresh' : 'check'} size={16} />
+            {submitting ? 'Ingresando…' : 'Ingresar'}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          Acceso privado para el equipo de Bitácora Financiera.
+        </p>
+      </div>
+    </div>
+  )
+}

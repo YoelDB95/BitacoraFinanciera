@@ -4,8 +4,15 @@ import {
   statusMessage,
 } from './errors.js'
 import { ENVIO_FACTURACION_LABELS } from './work.js'
+import { clearSession, normalizeSession, readSession } from './authStorage.js'
 
 const API_BASE = (import.meta.env?.VITE_API_URL ?? '/api').replace(/\/+$/, '')
+
+let unauthorizedHandler = null
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = typeof handler === 'function' ? handler : null
+}
 
 const GENERIC_MESSAGES = new Set(['error', 'failed', 'fail', 'unknown error'])
 
@@ -108,8 +115,15 @@ async function send(path = '', options = {}) {
   const method = String(options.method ?? 'GET').toUpperCase()
   let response
 
+  const isAuthEndpoint = path.startsWith('/auth/')
+  const session = isAuthEndpoint ? null : readSession()
   const headers = {
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(session?.token
+      ? {
+          Authorization: `${session.tokenType || 'Bearer'} ${session.token}`,
+        }
+      : {}),
     ...options.headers,
   }
 
@@ -143,6 +157,15 @@ async function send(path = '', options = {}) {
     })
   }
 
+  if (response.status === 401 && !isAuthEndpoint) {
+    clearSession()
+    try {
+      unauthorizedHandler?.()
+    } catch {
+      // La limpieza de sesión no debe alterar el error original.
+    }
+  }
+
   if (response.status === 204) return null
 
   const { data, raw } = await readResponseBody(response)
@@ -167,6 +190,29 @@ async function send(path = '', options = {}) {
   }
 
   return data
+}
+
+export async function login(credentials = {}) {
+  const username = String(credentials.username ?? credentials.usuario ?? '').trim()
+  const password = String(credentials.password ?? '')
+
+  const data = await send('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  })
+
+  const session = normalizeSession(data)
+  if (!session) {
+    throw new ApiError('El servidor no devolvió una sesión válida.', {
+      source: 'backend',
+      kind: 'server',
+      endpoint: makeEndpoint('/auth/login'),
+      method: 'POST',
+      payload: data ?? null,
+    })
+  }
+
+  return session
 }
 
 function request(path = '', options = {}) {
