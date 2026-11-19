@@ -3,14 +3,15 @@ const STORAGE_KEY = 'bitacora.auth.v1'
 function normalizeUser(user) {
   if (!user || typeof user !== 'object') return null
 
-  const username = String(user.username ?? user.usuario ?? '').trim()
+  const email = String(user.email ?? user.correo ?? '').trim()
+  const username = String(user.username ?? user.usuario ?? email).trim()
   const name = String(user.name ?? user.nombre ?? username).trim()
 
   return {
     id: user.id ?? user.userId ?? '',
     username,
     name: name || username,
-    email: String(user.email ?? '').trim(),
+    email,
   }
 }
 

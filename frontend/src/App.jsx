@@ -6,12 +6,14 @@ import Resumen from './pages/Resumen.jsx'
 import Empresa from './pages/Empresa.jsx'
 import Rutas from './pages/Rutas.jsx'
 import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route
         element={
           <ProtectedRoute>

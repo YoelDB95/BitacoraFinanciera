@@ -192,13 +192,10 @@ async function send(path = '', options = {}) {
   return data
 }
 
-export async function login(credentials = {}) {
-  const username = String(credentials.username ?? credentials.usuario ?? '').trim()
-  const password = String(credentials.password ?? '')
-
-  const data = await send('/auth/login', {
+async function requestSession(path, body) {
+  const data = await send(path, {
     method: 'POST',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(body),
   })
 
   const session = normalizeSession(data)
@@ -206,13 +203,28 @@ export async function login(credentials = {}) {
     throw new ApiError('El servidor no devolvió una sesión válida.', {
       source: 'backend',
       kind: 'server',
-      endpoint: makeEndpoint('/auth/login'),
+      endpoint: makeEndpoint(path),
       method: 'POST',
       payload: data ?? null,
     })
   }
 
   return session
+}
+
+export function login(credentials = {}) {
+  return requestSession('/auth/login', {
+    email: String(credentials.email ?? '').trim(),
+    password: String(credentials.password ?? ''),
+  })
+}
+
+export function register(values = {}) {
+  return requestSession('/auth/register', {
+    email: String(values.email ?? '').trim(),
+    name: String(values.name ?? '').trim(),
+    password: String(values.password ?? ''),
+  })
 }
 
 function request(path = '', options = {}) {

@@ -6,6 +6,7 @@ import {
   getRates,
   getRoutes,
   login,
+  register,
   setUnauthorizedHandler,
   toRoutePayload,
   toUpdateRoutePayload,
@@ -460,20 +461,24 @@ describe('request headers', () => {
 })
 
 describe('authentication API', () => {
-  it('sends username and password to the login endpoint', async () => {
+  it('sends email and password to the login endpoint', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({
         token: 'jwt-1',
-        user: { id: 'usr-1', username: 'yoel', name: 'Yoel' },
+        user: {
+          id: 'usr-1',
+          email: 'yoel@example.com',
+          name: 'Yoel',
+        },
       }),
     )
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
-      login({ username: 'yoel', password: 'secreto' }),
+      login({ email: 'yoel@example.com', password: 'secreto' }),
     ).resolves.toMatchObject({
       token: 'jwt-1',
-      user: { username: 'yoel', name: 'Yoel' },
+      user: { email: 'yoel@example.com', name: 'Yoel' },
     })
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -481,7 +486,42 @@ describe('authentication API', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'yoel', password: 'secreto' }),
+        body: JSON.stringify({ email: 'yoel@example.com', password: 'secreto' }),
+      }),
+    )
+  })
+
+  it('sends email, name and password to the register endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        token: 'jwt-register',
+        user: {
+          id: 'usr-2',
+          email: 'nuevo@example.com',
+          name: 'Nuevo Usuario',
+        },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      register({
+        email: 'nuevo@example.com',
+        name: 'Nuevo Usuario',
+        password: 'secreto123',
+      }),
+    ).resolves.toMatchObject({ token: 'jwt-register' })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/auth/register'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'nuevo@example.com',
+          name: 'Nuevo Usuario',
+          password: 'secreto123',
+        }),
       }),
     )
   })
@@ -508,7 +548,7 @@ describe('authentication API', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await login({ username: 'yoel', password: 'secreto' })
+    await login({ email: 'yoel@example.com', password: 'secreto' })
 
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/auth/login'),
@@ -546,7 +586,7 @@ describe('authentication API', () => {
     )
 
     await expect(
-      login({ username: 'yoel', password: 'mala' }),
+      login({ email: 'yoel@example.com', password: 'mala' }),
     ).rejects.toMatchObject({ status: 401 })
 
     expect(localStorage.getItem('bitacora.auth.v1')).not.toBeNull()

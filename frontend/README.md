@@ -30,3 +30,37 @@ VITE_API_URL_PROD=https://bitacorafinanciera.onrender.com/api
 ```
 
 Si la variable correspondiente no está definida en `.env`, el comando falla con un mensaje indicando cuál falta.
+
+## Autenticación
+
+El frontend consume estos endpoints (las rutas ya incluyen el prefijo `/api` de `VITE_API_URL`):
+
+| Acción | Endpoint | Body |
+| --- | --- | --- |
+| Login | `POST /auth/login` | `{ "email": "...", "password": "..." }` |
+| Registro | `POST /auth/register` | `{ "email": "...", "name": "...", "password": "..." }` |
+
+Ambos devuelven la sesión con el mismo formato:
+
+```json
+{
+  "token": "jwt.aquí",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "user": {
+    "id": "usr_1",
+    "email": "usuario@ejemplo.com",
+    "name": "Nombre del usuario"
+  }
+}
+```
+
+El registro inicia sesión automáticamente con el token devuelto.
+
+Validaciones del frontend:
+
+- `email`: obligatorio y con formato válido.
+- `name`: obligatorio en el registro.
+- `password`: obligatoria; en el registro mínimo 6 caracteres.
+
+CORS debe permitir el header `Authorization` además de `Content-Type`.

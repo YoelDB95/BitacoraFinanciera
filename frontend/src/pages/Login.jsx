@@ -1,15 +1,20 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import Icon from '../components/ui/Icon.jsx'
 import ErrorNotice from '../components/ui/ErrorNotice.jsx'
 import FormErrors from '../components/ui/FormErrors.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function validate(values) {
   const errors = {}
+  const email = String(values.email ?? '').trim()
 
-  if (!String(values.username ?? '').trim()) {
-    errors.username = 'Ingresá tu usuario.'
+  if (!email) {
+    errors.email = 'Ingresá tu correo electrónico.'
+  } else if (!EMAIL_PATTERN.test(email)) {
+    errors.email = 'Ingresá un correo electrónico válido.'
   }
   if (!String(values.password ?? '')) {
     errors.password = 'Ingresá tu contraseña.'
@@ -24,7 +29,7 @@ export default function Login() {
   const location = useLocation()
   const from = location.state?.from || '/'
 
-  const [values, setValues] = useState({ username: '', password: '' })
+  const [values, setValues] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -91,7 +96,7 @@ export default function Login() {
             title="No se pudo iniciar sesión"
             hint={
               invalidCredentials
-                ? 'Revisá el usuario y la contraseña e intentá de nuevo.'
+                ? 'Revisá el correo y la contraseña e intentá de nuevo.'
                 : undefined
             }
             details={false}
@@ -102,26 +107,26 @@ export default function Login() {
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="field">
-            <label className="field__label" htmlFor="login-username">
-              Usuario <span>*</span>
+            <label className="field__label" htmlFor="login-email">
+              Correo electrónico <span>*</span>
             </label>
             <input
-              id="login-username"
-              name="username"
+              id="login-email"
+              name="email"
               className="input"
-              type="text"
-              autoComplete="username"
-              placeholder="Tu usuario"
-              value={values.username}
+              type="email"
+              autoComplete="email"
+              placeholder="tu@correo.com"
+              value={values.email}
               onChange={handleChange}
-              aria-invalid={Boolean(errors.username)}
-              aria-describedby={errors.username ? 'login-username-error' : undefined}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
               autoFocus
             />
-            {errors.username ? (
-              <span id="login-username-error" className="field__error">
+            {errors.email ? (
+              <span id="login-email-error" className="field__error">
                 <Icon name="alert" size={12} />
-                {errors.username}
+                {errors.email}
               </span>
             ) : null}
           </div>
@@ -161,7 +166,7 @@ export default function Login() {
         </form>
 
         <p className="auth-footer">
-          Acceso privado para el equipo de Bitácora Financiera.
+          ¿No tenés cuenta? <Link to="/register">Registrate</Link>
         </p>
       </div>
     </div>

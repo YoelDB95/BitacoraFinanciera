@@ -90,6 +90,15 @@
   color: var(--text-dim);
 }
 
+.auth-footer a {
+  color: var(--brand-soft);
+  font-weight: 600;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 520px) {
   .auth-card {
     padding: 26px 22px;
