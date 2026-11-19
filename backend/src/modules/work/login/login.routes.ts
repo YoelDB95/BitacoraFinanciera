@@ -3,11 +3,11 @@
 */
 
 import { Router } from 'express';
+import loginController from './login.controller.js';
 
 const router = Router()
 
-router.post('/', (req, res) => { {
-  res.status(200).json({ message: 'Login successful' });
-} });
+router.post('/login', loginController.login);
+router.post('/register', loginController.register);
 
 export default router

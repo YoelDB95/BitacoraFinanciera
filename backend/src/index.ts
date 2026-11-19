@@ -11,7 +11,7 @@ const corsOptions = {
     'http://localhost:5173',
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }
 
 
@@ -20,7 +20,7 @@ const app = express();
 app.use(cors(corsOptions))
 app.use(express.json());
 
-app.use('api/login', loginRouter)
+app.use('/api/auth', loginRouter)
 app.use('/api/companies', companiesRouter);
 app.use('/api/routes', routesRouter)
 

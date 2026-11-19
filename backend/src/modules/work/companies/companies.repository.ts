@@ -2,7 +2,6 @@
         Consulta y modifica la base de datos mediante Prisma.
 */
 
-import { log } from "console";
 import { db } from "../../../prisma/db.js";
 import { Company, CreateCompanyInput } from "./companies.types.js";
 import { and } from "@prisma/orm-postgres/orm-client";
