@@ -17,11 +17,11 @@ const login = async ({ email, password }: { email: string; password: string }) =
     throw new Error('Invalid password');
   }
 
-  const token = jwt.sign({ id: user.id, username: user.email }, process.env.JWT_SECRET as string, {
+  const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET as string, {
     expiresIn: '1h',
   });
 
-  return { token, tokenType: 'Bearer', expiresIn: 3600, user: { id: user.id, username: user.email, name: user.name } };
+  return { token, tokenType: 'Bearer', expiresIn: 3600, user: { id: user.id, email: user.email, name: user.name } };
 };
 
 const register = async ({ email, password, name }: { email: string; password: string; name: string }) => {
@@ -37,11 +37,11 @@ const register = async ({ email, password, name }: { email: string; password: st
   const passwordHash = await bcrypt.hash(password, 10);
   const newUser = await userRepository.create({ email, passwordHash, name });
 
-  const token = jwt.sign({ id: newUser.id, username: newUser.email }, process.env.JWT_SECRET as string, {
+  const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_SECRET as string, {
     expiresIn: '1h',
   });
 
-  return { token, tokenType: 'Bearer', expiresIn: 3600, user: { id: newUser.id, username: newUser.email, name: newUser.name } };
+  return { token, tokenType: 'Bearer', expiresIn: 3600, user: { id: newUser.id, email: newUser.email, name: newUser.name } };
 }
 
 export default { login, register }
